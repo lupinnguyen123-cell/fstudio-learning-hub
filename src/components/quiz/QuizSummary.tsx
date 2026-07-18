@@ -1,0 +1,2 @@
+import type { QuizResult } from '../../types'
+export function QuizSummary({ result }: { result: QuizResult }) { return <div className="result-stats"><div><span><strong>{result.correctAnswers}</strong> câu đúng</span></div><div><span><strong>{result.incorrectAnswers}</strong> câu sai</span></div><div><span><strong>{result.unanswered}</strong> bỏ trống</span></div><div><span><strong>Lần {result.attemptNumber}</strong> làm bài</span></div></div> }

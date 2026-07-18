@@ -1,0 +1,5 @@
+import type { Question, QuizAnswerValue } from '../../types'
+export function QuizQuestion({ question, questionNumber, selected, disabled, onSelect }: { question: Question; questionNumber: number; selected: QuizAnswerValue | undefined; disabled: boolean; onSelect: (option: number) => void }) {
+  const isSelected = (index: number) => Array.isArray(selected) ? selected.includes(index) : selected === index
+  return <div className="question-card"><span className="question-number">Câu hỏi {String(questionNumber).padStart(2, '0')} · {question.points} điểm</span><h2>{question.prompt}</h2><fieldset disabled={disabled}><legend className="sr-only">{question.type === 'multi_select' ? 'Chọn các đáp án đúng' : 'Chọn một đáp án'}</legend>{question.options.map((option, index) => <label key={option} className={isSelected(index) ? 'selected' : ''}><input type={question.type === 'multi_select' ? 'checkbox' : 'radio'} name={`answer-${question.id}`} checked={isSelected(index)} onChange={() => onSelect(index)} /><span>{String.fromCharCode(65 + index)}</span>{option}</label>)}</fieldset></div>
+}

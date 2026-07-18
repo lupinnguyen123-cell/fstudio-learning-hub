@@ -1,0 +1,17 @@
+:root {
+  --surface-canvas: #f7f8fc; --surface-card: #ffffff; --surface-subtle: #f0f3f8;
+  --text-primary: #172033; --text-secondary: #526078; --text-muted: #718096;
+  --border-subtle: #e2e7ef; --border-strong: #cbd5e1;
+  --action-primary: #3b6ff5; --action-hover: #2f5ed7; --focus-ring: rgba(59,111,245,.28);
+  --status-success: #16825b; --status-warning: #c26a14; --status-danger: #d44848; --status-info: #3276d2;
+  --category-mac: #4f7df3; --category-mac-soft: #edf3ff;
+  --category-iphone: #8b5cf6; --category-iphone-soft: #f3efff;
+  --category-watch: #f08a3c; --category-watch-soft: #fff3e9;
+  --category-ecosystem: #2ea66f; --category-ecosystem-soft: #eaf8f1;
+  --category-dji: #e05252; --category-dji-soft: #fff0f0;
+  --category-garmin: #82a82f; --category-garmin-soft: #f3f8e8;
+  --category-soft-skill: #1b9eb7; --category-soft-skill-soft: #e9f8fb;
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-6: 24px; --space-8: 32px; --space-12: 48px; --space-16: 64px;
+  --radius-sm: 8px; --radius-md: 12px; --radius-lg: 16px; --radius-xl: 24px; --radius-pill: 999px;
+  --shadow-raised: 0 10px 30px rgba(30,45,75,.08); --shadow-floating: 0 20px 55px rgba(30,45,75,.13);
+}
