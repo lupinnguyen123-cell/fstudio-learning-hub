@@ -42,7 +42,9 @@ export function rewardLessonCompletion(progress: LearningProgress, course: Cours
   return { ...progress, totalXp: progress.totalXp + lesson.xpReward + (rewardModule ? module.xpReward : 0), rewardedLessonIds: [...progress.rewardedLessonIds, lessonId], rewardedModuleIds: rewardModule ? [...progress.rewardedModuleIds, module.id] : progress.rewardedModuleIds, earnedBadgeIds: [...new Set([...progress.earnedBadgeIds, ...(firstBadge ? [firstBadge.id] : []), ...(moduleBadge ? [moduleBadge.id] : [])])] }
 }
 export function rewardQuizPass(progress: LearningProgress, course: Course, result: QuizResult): LearningProgress {
-  if (!result.passed || progress.rewardedQuizCourseIds.includes(result.courseId)) return progress
+  const requiredLessons = course.modules.flatMap((module) => module.lessons).filter((lesson) => lesson.required)
+  const completedRequiredLessons = requiredLessons.every((lesson) => progress.completedLessonIds.includes(lesson.id))
+  if (!result.passed || !completedRequiredLessons || progress.rewardedQuizCourseIds.includes(result.courseId)) return progress
   const badges = course.gamification.badges.filter((badge) => badge.condition === 'quiz_passed' || badge.condition === 'course_complete').map((badge) => badge.id)
   return { ...progress, totalXp: progress.totalXp + course.quiz.xpReward + course.gamification.courseCompletionXp, rewardedQuizCourseIds: [...progress.rewardedQuizCourseIds, result.courseId], earnedBadgeIds: [...new Set([...progress.earnedBadgeIds, ...badges])] }
 }

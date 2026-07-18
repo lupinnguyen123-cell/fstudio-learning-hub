@@ -11,6 +11,58 @@ const defaultStore = (): ContentStore => ({ schemaVersion: CONTENT_SCHEMA_VERSIO
 const browserStorage = (): StorageLike | null => { try { return window.localStorage } catch { return null } }
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value)
 
+export interface PublishValidationIssue {
+  id: string
+  message: string
+  tab: 'settings' | 'structure' | 'lesson' | 'quiz'
+  moduleId?: string
+  lessonId?: string
+}
+
+export function validateCourseForPublish(course: Course): PublishValidationIssue[] {
+  const issues: PublishValidationIssue[] = []
+  if (!course.title.trim()) issues.push({ id: 'course-title', message: 'Nhập tên khóa học.', tab: 'settings' })
+  if (!course.modules.length) issues.push({ id: 'course-modules', message: 'Thêm ít nhất một module.', tab: 'structure' })
+  course.modules.forEach((module, moduleIndex) => {
+    if (!module.lessons.length) issues.push({ id: `module-${module.id}`, message: `Module ${moduleIndex + 1} “${module.title || 'Chưa đặt tên'}” cần ít nhất một lesson.`, tab: 'structure', moduleId: module.id })
+    module.lessons.forEach((lesson, lessonIndex) => {
+      if (!lesson.blocks.length) issues.push({ id: `lesson-${lesson.id}`, message: `Lesson ${lessonIndex + 1} “${lesson.title || 'Chưa đặt tên'}” cần ít nhất một block.`, tab: 'lesson', moduleId: module.id, lessonId: lesson.id })
+    })
+  })
+  if (!course.quiz.questions.length) issues.push({ id: 'quiz-empty', message: 'Thêm ít nhất một câu hỏi quiz.', tab: 'quiz' })
+  if (!Number.isFinite(course.quiz.passScore) || course.quiz.passScore < 0 || course.quiz.passScore > 100) issues.push({ id: 'quiz-pass-score', message: 'Điểm đạt quiz phải từ 0 đến 100.', tab: 'quiz' })
+  course.quiz.questions.forEach((question, index) => {
+    if (!question.prompt.trim()) issues.push({ id: `question-${question.id}-prompt`, message: `Câu ${index + 1}: nhập nội dung câu hỏi.`, tab: 'quiz' })
+    const validIndexes = question.correctOptionIndexes.filter((answer) => Number.isInteger(answer) && answer >= 0 && answer < question.options.length)
+    const expected = question.type === 'multi_select' ? validIndexes.length >= 1 : validIndexes.length === 1
+    if (!expected) issues.push({ id: `question-${question.id}-answer`, message: `Câu ${index + 1}: chọn ${question.type === 'multi_select' ? 'ít nhất một' : 'đúng một'} đáp án đúng.`, tab: 'quiz' })
+  })
+  return issues
+}
+
+function duplicateWithNewIds(source: Course): Course {
+  const moduleIds = new Map(source.modules.map((module) => [module.id, uid('module')]))
+  const lessonIds = new Map(source.modules.flatMap((module) => module.lessons).map((lesson) => [lesson.id, uid('lesson')]))
+  const reIdBlock = (block: LessonBlock): LessonBlock => {
+    const id = uid('block')
+    switch (block.type) {
+      case 'quick_question': case 'multiple_choice': case 'multi_select': return { ...clone(block), id, options: block.options.map((option) => ({ ...option, id: uid('option') })) }
+      case 'scenario': return { ...clone(block), id, options: block.options.map((option) => ({ ...option, id: uid('option') })) }
+      case 'flashcard': return { ...clone(block), id, cards: block.cards.map((card) => ({ ...card, id: uid('card') })) }
+      case 'checklist': case 'sorting': return { ...clone(block), id, items: block.items.map((item) => ({ ...item, id: uid('item') })) }
+      case 'matching': return { ...clone(block), id, pairs: block.pairs.map((pair) => ({ ...pair, id: uid('pair') })) }
+      default: return { ...clone(block), id }
+    }
+  }
+  const timestamp = now()
+  return {
+    ...clone(source), id: uid('course'), title: `${source.title} (Bản sao)`, publishStatus: 'draft', status: 'not-started', progress: 0, createdAt: timestamp, updatedAt: timestamp,
+    modules: source.modules.map((module) => ({ ...clone(module), id: moduleIds.get(module.id)!, lessons: module.lessons.map((lesson) => ({ ...clone(lesson), id: lessonIds.get(lesson.id)!, blocks: lesson.blocks.map(reIdBlock) })) })),
+    quiz: { ...clone(source.quiz), id: uid('quiz'), questions: source.quiz.questions.map((question) => ({ ...clone(question), id: uid('question'), relatedModuleId: moduleIds.get(question.relatedModuleId) ?? '', relatedLessonId: lessonIds.get(question.relatedLessonId) ?? '' })) },
+    gamification: { ...clone(source.gamification), badges: source.gamification.badges.map((badge) => ({ ...badge, id: uid('badge') })) },
+  }
+}
+
 export function validateCourse(value: unknown): value is Course {
   if (!isRecord(value)) return false
   return typeof value.id === 'string' && typeof value.title === 'string' && typeof value.description === 'string' &&
@@ -75,6 +127,7 @@ export class ContentService {
   addCourse(course = createCourse()) { return this.save({ ...this.store, courses: [...this.store.courses, course] }) }
   updateCourse(course: Course) { return this.save({ ...this.store, courses: this.store.courses.map((item) => item.id === course.id ? { ...clone(course), updatedAt: now() } : item) }) }
   deleteCourse(id: string) { return this.save({ ...this.store, courses: this.store.courses.filter((course) => course.id !== id) }) }
+  duplicateCourse(id: string) { const course = this.store.courses.find((item) => item.id === id); if (!course) return null; const duplicate = duplicateWithNewIds(course); this.addCourse(duplicate); return duplicate }
   setPublishStatus(id: string, status: PublishStatus) { const course = this.store.courses.find((item) => item.id === id); return course ? this.updateCourse({ ...course, publishStatus: status }) : this.getStore() }
   reset() { this.storage?.removeItem(CONTENT_STORAGE_KEY); this.warning = ''; this.store = defaultStore(); window.dispatchEvent(new Event('fstudio-content-change')); return this.getStore() }
   exportCourse(id: string) { const course = this.store.courses.find((item) => item.id === id); if (!course) throw new Error('Không tìm thấy khóa học'); return JSON.stringify(course, null, 2) }
@@ -90,7 +143,7 @@ export class ContentService {
   importJson(text: string, strategy: ImportConflictStrategy): ContentStore {
     const preview = this.previewImport(text); if (!preview.valid || !preview.payload) throw new Error(preview.errors.join(' ')); if (strategy === 'cancel') return this.getStore()
     const incoming = preview.kind === 'course' ? [preview.payload as Course] : (preview.payload as ContentStore).courses
-    const copied = incoming.map((course) => strategy === 'copy' && this.store.courses.some((item) => item.id === course.id) ? { ...clone(course), id: uid('course'), title: `${course.title} (Bản sao)`, publishStatus: 'draft' as const } : clone(course))
+    const copied = incoming.map((course) => strategy === 'copy' && this.store.courses.some((item) => item.id === course.id) ? duplicateWithNewIds(course) : clone(course))
     const ids = new Set(copied.map((course) => course.id)); const retained = strategy === 'overwrite' ? this.store.courses.filter((course) => !ids.has(course.id)) : this.store.courses
     return this.save({ ...this.store, courses: [...retained, ...copied] })
   }

@@ -20,6 +20,7 @@ describe('quiz grading', () => {
   it('grades quiz accurately', () => { const answers = Object.fromEntries(quizQuestions.map((question) => [question.id, question.correctOptionIndex])); expect(gradeQuiz(course.id, quizQuestions, answers, 1).score).toBe(100) })
   it('passes at exactly 80 percent', () => { const answers = Object.fromEntries(quizQuestions.slice(0, 8).map((question) => [question.id, question.correctOptionIndex])); const result = gradeQuiz(course.id, quizQuestions, answers, 1); expect(result.score).toBe(PASS_SCORE); expect(result.passed).toBe(true) })
   it('fails at 79 and passes at 80', () => { expect(isPassingScore(79)).toBe(false); expect(isPassingScore(80)).toBe(true) })
+  it('uses the pass score configured by the trainer', () => { const answers = Object.fromEntries(quizQuestions.slice(0, 8).map((question) => [question.id, question.correctOptionIndex])); expect(gradeQuiz(course.id, quizQuestions, answers, 1, 90).passed).toBe(false); expect(gradeQuiz(course.id, quizQuestions, answers, 1, 80).passed).toBe(true) })
   it('counts unanswered answers and attempts per course', () => { const result = gradeQuiz(course.id, quizQuestions, {}, 1); expect(result.unanswered).toBe(10); expect(result.incorrectAnswers).toBe(0); expect(getNextAttemptNumber(course.id, [{ result: { courseId: 'other' } }, { result: { courseId: course.id } }])).toBe(2) })
 })
 
