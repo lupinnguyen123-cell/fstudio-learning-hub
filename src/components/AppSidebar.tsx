@@ -1,4 +1,4 @@
-import { BookOpen, Home, Map, PlusCircle, UserRound, X, type LucideIcon } from 'lucide-react'
+import { BookOpen, Home, Map, PlusCircle, UserRound, WandSparkles, X, type LucideIcon } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 import type { UserRole } from '../types'
 import { BrandLogo } from './BrandLogo'
@@ -6,7 +6,7 @@ import { RoleSwitcher } from './RoleSwitcher'
 
 interface NavigationItem { to: string; label: string; icon: LucideIcon; end?: boolean }
 const employeeItems: NavigationItem[] = [{ to: '/', label: 'Trang chủ', icon: Home, end: true }, { to: '/courses', label: 'Khóa học của tôi', icon: BookOpen }, { to: '/journey', label: 'Hành trình học tập', icon: Map }, { to: '/profile', label: 'Hồ sơ', icon: UserRound }]
-const trainerItems: NavigationItem[] = [{ to: '/admin/courses', label: 'Khóa học', icon: BookOpen }, { to: '/admin/courses/new', label: 'Tạo khóa học', icon: PlusCircle }]
+const trainerItems: NavigationItem[] = [{ to: '/admin/courses', label: 'Khóa học', icon: BookOpen }, { to: '/admin/courses/new', label: 'Tạo khóa học', icon: PlusCircle }, { to: '/admin/ai-course', label: 'AI Course', icon: WandSparkles }]
 
 export function AppSidebar({ role, open, onClose }: { role: UserRole; open: boolean; onClose(): void }) {
   const items = role === 'trainer' ? trainerItems : employeeItems
