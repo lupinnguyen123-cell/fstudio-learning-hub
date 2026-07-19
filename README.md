@@ -5,7 +5,7 @@ Nền tảng E-learning nội bộ cho F.Studio với hai trải nghiệm:
 - **Employee Learning:** học lesson tương tác, làm quiz, theo dõi progress, XP và badge.
 - **Trainer CMS MVP:** tạo Course → Module → Lesson → LessonBlock, preview, publish và import/export JSON.
 
-Phiên bản hiện tại là frontend pilot chạy hoàn toàn trong trình duyệt. Chưa có backend, Supabase hoặc authentication thật; content và learning progress được lưu bằng localStorage.
+Phiên bản hiện tại vẫn lưu content và learning progress bằng localStorage, chưa có Supabase hoặc authentication thật. AI Course Authoring gọi provider qua Netlify Functions; secret không đi vào React bundle.
 
 ## Công nghệ
 
@@ -36,6 +36,14 @@ npm test
 npm run build
 npm audit
 ```
+
+Để kiểm tra AI Functions local, cài/chạy Netlify CLI theo nhu cầu và dùng:
+
+```bash
+npx netlify dev
+```
+
+`npm run dev` vẫn dùng cho frontend thông thường, nhưng các endpoint `/.netlify/functions/*` chỉ hoạt động khi chạy qua Netlify Dev hoặc trên site đã deploy.
 
 ## Build
 
@@ -96,6 +104,23 @@ Triển khai từ Netlify UI:
 3. Kết nối repository.
 4. Xác nhận build command và publish directory từ `netlify.toml`.
 5. Deploy, sau đó smoke test `/`, `/courses`, một lesson route, quiz route và `/admin/courses`.
+
+### Cấu hình AI provider
+
+Trong **Site configuration → Environment variables**, cấu hình các biến server-side sau:
+
+| Biến | Giá trị đề xuất |
+|---|---|
+| `AI_PROVIDER` | `openai` |
+| `AI_API_KEY` | Secret API key; không thêm tiền tố `VITE_` |
+| `AI_MODEL` | Model hỗ trợ Structured Outputs, ví dụ `gpt-4.1-mini` |
+| `AI_REQUEST_TIMEOUT_MS` | `60000` |
+| `AI_MAX_SOURCE_CHARS` | `30000` |
+| `AI_ENABLE_MOCK_FALLBACK` | `false` trong production |
+
+Sau khi thay đổi biến môi trường, trigger deploy mới. File [`.env.example`](./.env.example) chỉ chứa tên biến và cấu hình không nhạy cảm. Không commit `.env`, `.env.local` hoặc `.netlify/.env`.
+
+AI thật hiện chỉ nhận nội dung Trainer dán, TXT hoặc Markdown có text hợp lệ. PDF, PPTX và DOCX chưa được parse; UI không gửi phần metadata/mock text tới provider. Nếu provider chưa được cấu hình, production hiển thị lỗi rõ ràng. Development có thể chọn tạo mock draft thủ công và draft đó luôn được gắn nhãn mô phỏng.
 
 Không commit `.env`, `.env.local`, `node_modules` hoặc `dist`.
 

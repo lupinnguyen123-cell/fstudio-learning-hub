@@ -15,7 +15,7 @@ export interface AiSourceDocument {
   sourceLanguage: 'vi' | 'en' | 'unknown'
   pageCount?: number
   slideCount?: number
-  metadata: { extractionMode: 'mock'; note: string }
+  metadata: { extractionMode: 'mock' | 'pasted' | 'text_file'; note: string }
 }
 
 export interface AiImportedFile {
@@ -64,6 +64,7 @@ export interface AiCourseDraft {
   updatedAt: string
   status: AiDraftStatus
   review?: AiDraftReviewMeta
+  generation?: { provider: string; model: string; generatedAt: string; latencyMs: number; isMock?: boolean; usage?: { inputTokens?: number; outputTokens?: number; totalTokens?: number } }
 }
 
 export interface AiValidationIssue { id: string; path: string; message: string }

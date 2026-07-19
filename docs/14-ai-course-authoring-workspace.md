@@ -63,3 +63,15 @@ Review-only metadata is optional on the AI draft for backward compatibility:
 `useAiReviewHistory` keeps at most 25 immutable states in memory. The current draft is autosaved after a 650 ms debounce, but undo history is intentionally session-only. Draft health and approval readiness are transparent rule-based calculations rather than AI scores.
 
 Preview converts in memory and reuses the Employee lesson block renderer. It never calls ContentService, ProgressService, quiz submission, XP, or badge code. Approval remains the only production boundary: it creates a new Draft Course, stores the AI draft with `approved` status for audit, and never auto-publishes or overwrites an existing Course.
+
+## AI-4 provider abstraction and real API
+
+The production path has three boundaries: React calls only `src/ai/aiClient.ts`; Netlify Functions validate and limit requests before selecting a server-side provider; the OpenAI provider uses the Responses API with Structured Outputs. Server parsing and the existing AI Draft validator both reject malformed output before persistence.
+
+Internal endpoints are `POST /.netlify/functions/ai-course-generate` and `POST /.netlify/functions/ai-course-regenerate`. Secrets are read only from `process.env.AI_API_KEY` inside the function. React contains no provider SDK, bearer token, or `VITE_*KEY` reference.
+
+Prompts are separated into system instruction, source context, authoring rules, and output schema. Retail guardrails prohibit invented prices, promotions, dates, warranty policy, or product specifications; uncertainty must become a Trainer warning. Generate creates only an AI Draft. Regenerate sends minimal selected context and returns Before/After; the Trainer must explicitly Apply.
+
+Provider, model, generated timestamp, latency, optional usage, and mock status live only on the AI Draft. They are not added to the production Course schema. PDF, PPTX, and DOCX still have no real parser: only pasted text, TXT, and Markdown can reach the provider.
+
+Development mock fallback requires `AI_ENABLE_MOCK_FALLBACK=true`, is disabled when Netlify `CONTEXT=production`, and is always labelled as a simulation. The in-memory per-IP function rate limit is an MVP guardrail and does not replace authentication or durable quota enforcement.

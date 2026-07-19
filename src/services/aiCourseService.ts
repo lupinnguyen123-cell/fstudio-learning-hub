@@ -75,9 +75,17 @@ export class AiCourseService {
     const mockByPreset: Record<AiPresetId, string> = { product: 'Mock extraction only: product features, customer needs and price positioning.', sales: 'Mock extraction only: sales consultation, customer needs, objections and store process.', campaign: 'Mock extraction only: campaign conditions, promotion details and store process.' }
     const mockText = extractedText.trim() || mockByPreset[preset]
     sourceCounter += 1
-    const source: AiSourceDocument = { id: `source-${Date.now().toString(36)}-${sourceCounter}-${slug(file.name)}`, fileName: file.name, fileType: file.type || extension, fileSize: file.size, extractedText: mockText, importedAt: now(), sourceLanguage: 'vi', metadata: { extractionMode: 'mock', note: 'Chưa parse nội dung file; extractedText là fixture mô phỏng.' } }
+    const realText = extractedText.trim()
+    const source: AiSourceDocument = { id: `source-${Date.now().toString(36)}-${sourceCounter}-${slug(file.name)}`, fileName: file.name, fileType: file.type || extension, fileSize: file.size, extractedText: mockText, importedAt: now(), sourceLanguage: 'vi', metadata: { extractionMode: realText ? 'text_file' : 'mock', note: realText ? 'Text được đọc trực tiếp từ file Trainer chọn.' : 'Chưa parse nội dung file; extractedText là fixture mô phỏng.' } }
     const sizeMb = Math.max(.1, file.size / 1024 / 1024); const estimatedModules = Math.min(6, Math.max(2, Math.ceil(sizeMb / 2)))
     return { source, estimatedModules, estimatedLessons: estimatedModules * 2, suggestedPreset: preset }
+  }
+
+  analyzeText(extractedText: string, fileName = 'trainer-source.md'): AiImportedFile {
+    const value = extractedText.trim()
+    if (!value) throw new Error('empty_source')
+    const result = this.analyzeSource({ name: fileName, size: new Blob([value]).size, type: 'text/markdown' }, value)
+    return { ...result, source: { ...result.source, metadata: { extractionMode: 'pasted', note: 'Nội dung được Trainer dán trực tiếp.' } } }
   }
 
   generateCourseDraft(source: AiSourceDocument, preset: AiPresetId = suggestedPreset(`${source.fileName} ${source.extractedText}`), options?: { failureMode?: 'generation_failed' | 'missing_module' | 'invalid_quiz' }): AiCourseDraft {

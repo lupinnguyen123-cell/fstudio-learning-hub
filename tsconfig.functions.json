@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "lib": ["ES2023", "DOM"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "types": ["node"],
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true
+  },
+  "include": ["netlify/functions/**/*.ts", "src/assets.d.ts", "src/ai/contracts.ts", "src/ai/responseValidation.ts", "src/features/ai-authoring/types.ts", "src/features/ai-authoring/aiReviewActions.ts"]
+}
