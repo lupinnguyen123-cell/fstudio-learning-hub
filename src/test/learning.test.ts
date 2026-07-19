@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { courseCatalog, quizQuestions } from '../data/courses'
 import { createDefaultProgress, readProgress, resetProgress, writeProgress, type StorageAdapter } from '../services/progressService'
-import { addCompletedLesson, calculateCourseProgress, courseStatusFromProgress, getContinueLesson, getContinuePath, getNextLesson, isQuizUnlocked } from '../utils/courseProgress'
+import { addCompletedLesson, calculateCourseProgress, courseStatusFromProgress, getActiveLearningCourse, getContinueLesson, getContinuePath, getNextLesson, isQuizUnlocked } from '../utils/courseProgress'
 import { getNextAttemptNumber, gradeQuiz, isPassingScore, PASS_SCORE } from '../utils/quiz'
 
 const course = courseCatalog[0]
@@ -13,6 +13,7 @@ describe('learning progress', () => {
   it('finds the next lesson', () => expect(getNextLesson(course, 'lesson-segments')?.id).toBe('lesson-air'))
   it('determines continue learning', () => expect(getContinueLesson(course, ['lesson-needs'], 'lesson-needs')?.id).toBe('lesson-segments'))
   it('routes continue learning to first lesson, quiz, then results', () => { const allIds = course.modules.flatMap((module) => module.lessons.map((lesson) => lesson.id)); expect(getContinuePath(course, [], null, null)).toBe('/learn/mac-back-to-school/lesson-needs'); expect(getContinuePath(course, allIds, 'lesson-quiz-intro', null)).toBe('/quiz/mac-back-to-school'); const passed = gradeQuiz(course.id, quizQuestions, Object.fromEntries(quizQuestions.map((question) => [question.id, question.correctOptionIndex])), 1); expect(getContinuePath(course, allIds, 'lesson-quiz-intro', passed)).toBe('/results/mac-back-to-school') })
+  it('prefers the current unfinished course and skips completed courses', () => { const first = { ...course, id: 'first', status: 'completed' as const }; const second = { ...course, id: 'second', status: 'in-progress' as const }; const third = { ...course, id: 'third', status: 'not-started' as const }; expect(getActiveLearningCourse([first, second, third], 'third')?.id).toBe('third'); expect(getActiveLearningCourse([first, second, third], 'first')?.id).toBe('second'); expect(getActiveLearningCourse([first], 'first')).toBeUndefined() })
   it('locks and unlocks quiz', () => { expect(isQuizUnlocked(course, ['lesson-needs'])).toBe(false); expect(isQuizUnlocked(course, course.modules.flatMap((module) => module.lessons.map((lesson) => lesson.id)))).toBe(true) })
   it('marks a course complete only after lesson progress and a passed quiz', () => { expect(courseStatusFromProgress(100, false)).toBe('in-progress'); expect(courseStatusFromProgress(99, true)).toBe('in-progress'); expect(courseStatusFromProgress(100, true)).toBe('completed') })
 })

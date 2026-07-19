@@ -26,3 +26,8 @@ export function getContinuePath(course: Course, completedIds: string[], currentL
   if (latestResult?.courseId === course.id) return `/results/${course.id}`
   return `/quiz/${course.id}`
 }
+export function getActiveLearningCourse(courses: Course[], currentCourseId: string | null): Course | undefined {
+  const current = courses.find((course) => course.id === currentCourseId)
+  if (current && current.status !== 'completed') return current
+  return courses.find((course) => course.status !== 'completed')
+}

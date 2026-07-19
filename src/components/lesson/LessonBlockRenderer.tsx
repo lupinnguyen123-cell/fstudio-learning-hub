@@ -2,6 +2,17 @@ import { useMemo, useState } from 'react'
 import { AlertTriangle, Award, Check, Download, HelpCircle, Image as ImageIcon, Lightbulb, PlaySquare, RotateCcw, Sparkles } from 'lucide-react'
 import type { LessonBlock } from '../../types'
 
+function isRenderableBlock(block: LessonBlock): boolean {
+  const value = block as unknown as Record<string, unknown>
+  if (!value || typeof value.type !== 'string') return false
+  if (['bullet_list', 'checklist', 'sorting'].includes(block.type)) return Array.isArray(value.items)
+  if (['quick_question', 'multiple_choice', 'multi_select', 'scenario'].includes(block.type)) return Array.isArray(value.options)
+  if (block.type === 'flashcard') return Array.isArray(value.cards)
+  if (block.type === 'dialogue') return Array.isArray(value.lines)
+  if (block.type === 'matching') return Array.isArray(value.pairs)
+  return true
+}
+
 function safeEmbed(url: string, provider: 'youtube' | 'vimeo' | 'direct') {
   try { const parsed = new URL(url); if (provider === 'youtube') { const id = parsed.hostname.includes('youtu.be') ? parsed.pathname.slice(1) : parsed.searchParams.get('v'); return id ? `https://www.youtube-nocookie.com/embed/${id}` : null } if (provider === 'vimeo') { const id = parsed.pathname.split('/').filter(Boolean).pop(); return id && /^\d+$/.test(id) ? `https://player.vimeo.com/video/${id}` : null } return parsed.protocol === 'https:' ? parsed.toString() : null } catch { return null }
 }
@@ -16,6 +27,7 @@ function Sorting({ block }: { block: Extract<LessonBlock, { type: 'sorting' }> }
 function Matching({ block }: { block: Extract<LessonBlock, { type: 'matching' }> }) { const shuffled = useMemo(() => [...block.pairs].reverse(), [block.pairs]); const [answers, setAnswers] = useState<Record<string, string>>({}); const [checked, setChecked] = useState(false); const correct = block.pairs.every((pair) => answers[pair.id] === pair.right); return <section className="interactive-block"><span className="block-kicker">Matching · Experimental</span><h2>{block.prompt}</h2>{block.pairs.map((pair) => <label className="matching-row" key={pair.id}><span>{pair.left}</span><select value={answers[pair.id] ?? ''} onChange={(event) => { setChecked(false); setAnswers({ ...answers, [pair.id]: event.target.value }) }}><option value="">Chọn cặp</option>{shuffled.map((item) => <option key={item.id} value={item.right}>{item.right}</option>)}</select></label>)}<button className="button button-primary" onClick={() => setChecked(true)}>Kiểm tra</button>{checked && <p role="status" className="activity-feedback">{correct ? block.feedback : 'Một số cặp chưa chính xác.'}</p>}</section> }
 
 export function LessonBlockRenderer({ block }: { block: LessonBlock }) {
+  if (!isRenderableBlock(block)) return <section className="invalid-block" role="note"><AlertTriangle /><div><strong>Nội dung chưa sẵn sàng</strong><p>Block này thiếu dữ liệu cần thiết. Vui lòng báo Trainer kiểm tra lại.</p></div></section>
   switch (block.type) {
     case 'heading': return block.level === 2 ? <h2>{block.text}</h2> : <h3>{block.text}</h3>
     case 'paragraph': return <p>{block.text}</p>

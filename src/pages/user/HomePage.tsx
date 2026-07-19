@@ -8,14 +8,14 @@ import { SectionHeader } from '../../components/SectionHeader'
 import { useContent } from '../../context/ContentContext'
 import { useLearningProgress } from '../../hooks/useLearningProgress'
 import { courseService } from '../../services/courseService'
-import { getContinueLesson, getContinuePath } from '../../utils/courseProgress'
+import { getActiveLearningCourse, getContinueLesson, getContinuePath } from '../../utils/courseProgress'
 
 export function HomePage() {
   useContent()
   const { progress } = useLearningProgress()
   const courses = courseService.getCourses(progress.completedLessonIds, progress.latestQuizResult)
   const user = courseService.getUser()
-  const activeCourse = courseService.getCourse(progress.currentCourseId ?? courses[0]?.id, progress.completedLessonIds, progress.latestQuizResult) ?? courses[0]
+  const activeCourse = getActiveLearningCourse(courses, progress.currentCourseId)
   const continuePath = activeCourse ? getContinuePath(activeCourse, progress.completedLessonIds, progress.currentLessonId, progress.latestQuizResult) : '/courses'
   const inProgress = courses.filter((course) => course.status === 'in-progress').slice(0, 2)
   const completedCourses = courses.filter((course) => course.status === 'completed').length
