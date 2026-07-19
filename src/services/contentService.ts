@@ -14,7 +14,7 @@ const isRecord = (value: unknown): value is Record<string, unknown> => typeof va
 export interface PublishValidationIssue {
   id: string
   message: string
-  tab: 'settings' | 'structure' | 'lesson' | 'quiz'
+  tab: 'settings' | 'structure' | 'lesson' | 'quiz' | 'rewards'
   moduleId?: string
   lessonId?: string
 }
@@ -22,6 +22,8 @@ export interface PublishValidationIssue {
 export function validateCourseForPublish(course: Course): PublishValidationIssue[] {
   const issues: PublishValidationIssue[] = []
   if (!course.title.trim()) issues.push({ id: 'course-title', message: 'Nhập tên khóa học.', tab: 'settings' })
+  if (!course.description.trim()) issues.push({ id: 'course-description', message: 'Nhập mô tả khóa học.', tab: 'settings' })
+  if (!Number.isFinite(course.durationMinutes) || course.durationMinutes <= 0) issues.push({ id: 'course-duration', message: 'Thời lượng khóa học phải lớn hơn 0 phút.', tab: 'settings' })
   if (!course.modules.length) issues.push({ id: 'course-modules', message: 'Thêm ít nhất một module.', tab: 'structure' })
   course.modules.forEach((module, moduleIndex) => {
     if (!module.lessons.length) issues.push({ id: `module-${module.id}`, message: `Module ${moduleIndex + 1} “${module.title || 'Chưa đặt tên'}” cần ít nhất một lesson.`, tab: 'structure', moduleId: module.id })
@@ -33,27 +35,54 @@ export function validateCourseForPublish(course: Course): PublishValidationIssue
   if (!Number.isFinite(course.quiz.passScore) || course.quiz.passScore < 0 || course.quiz.passScore > 100) issues.push({ id: 'quiz-pass-score', message: 'Điểm đạt quiz phải từ 0 đến 100.', tab: 'quiz' })
   course.quiz.questions.forEach((question, index) => {
     if (!question.prompt.trim()) issues.push({ id: `question-${question.id}-prompt`, message: `Câu ${index + 1}: nhập nội dung câu hỏi.`, tab: 'quiz' })
+    if (question.options.length < 2 || question.options.some((option) => !option.trim())) issues.push({ id: `question-${question.id}-options`, message: `Câu ${index + 1}: cần ít nhất 2 đáp án có nội dung.`, tab: 'quiz' })
     const validIndexes = question.correctOptionIndexes.filter((answer) => Number.isInteger(answer) && answer >= 0 && answer < question.options.length)
     const expected = question.type === 'multi_select' ? validIndexes.length >= 1 : validIndexes.length === 1
     if (!expected) issues.push({ id: `question-${question.id}-answer`, message: `Câu ${index + 1}: chọn ${question.type === 'multi_select' ? 'ít nhất một' : 'đúng một'} đáp án đúng.`, tab: 'quiz' })
   })
+  course.gamification.badges.forEach((badge, index) => {
+    if (!badge.name.trim() || !badge.description.trim()) issues.push({ id: `badge-${badge.id}`, message: `Badge ${index + 1}: nhập đủ tên và mô tả.`, tab: 'rewards' })
+  })
   return issues
 }
+
+export interface CompletenessItem { id: string; label: string; complete: boolean; tab: PublishValidationIssue['tab'] }
+export function getCourseCompleteness(course: Course): { percentage: number; items: CompletenessItem[] } {
+  const modulesReady = course.modules.length > 0
+  const lessonsReady = modulesReady && course.modules.every((module) => module.lessons.length > 0)
+  const blocksReady = lessonsReady && course.modules.every((module) => module.lessons.every((lesson) => lesson.blocks.length > 0))
+  const questionsReady = course.quiz.questions.length > 0 && course.quiz.questions.every((question) => question.prompt.trim() && question.options.length >= 2 && question.correctOptionIndexes.length > 0)
+  const items: CompletenessItem[] = [
+    { id: 'basic', label: 'Tên, mô tả và thời lượng hợp lệ', complete: Boolean(course.title.trim() && course.description.trim() && course.durationMinutes > 0), tab: 'settings' },
+    { id: 'modules', label: 'Có ít nhất một module', complete: modulesReady, tab: 'structure' },
+    { id: 'lessons', label: 'Mỗi module có lesson', complete: lessonsReady, tab: 'structure' },
+    { id: 'blocks', label: 'Mỗi lesson có nội dung', complete: blocksReady, tab: 'lesson' },
+    { id: 'quiz', label: 'Quiz có câu hỏi và đáp án đúng', complete: questionsReady, tab: 'quiz' },
+    { id: 'score', label: 'Điểm đạt từ 0 đến 100', complete: Number.isFinite(course.quiz.passScore) && course.quiz.passScore >= 0 && course.quiz.passScore <= 100, tab: 'quiz' },
+    { id: 'badges', label: 'Badge đã thêm có đủ thông tin', complete: course.gamification.badges.every((badge) => badge.name.trim() && badge.description.trim()), tab: 'rewards' },
+  ]
+  return { items, percentage: Math.round((items.filter((item) => item.complete).length / items.length) * 100) }
+}
+
+function reIdBlock(block: LessonBlock): LessonBlock {
+  const id = uid('block')
+  switch (block.type) {
+    case 'quick_question': case 'multiple_choice': case 'multi_select': return { ...clone(block), id, options: block.options.map((option) => ({ ...option, id: uid('option') })) }
+    case 'scenario': return { ...clone(block), id, options: block.options.map((option) => ({ ...option, id: uid('option') })) }
+    case 'flashcard': return { ...clone(block), id, cards: block.cards.map((card) => ({ ...card, id: uid('card') })) }
+    case 'checklist': case 'sorting': return { ...clone(block), id, items: block.items.map((item) => ({ ...item, id: uid('item') })) }
+    case 'matching': return { ...clone(block), id, pairs: block.pairs.map((pair) => ({ ...pair, id: uid('pair') })) }
+    default: return { ...clone(block), id }
+  }
+}
+
+export function duplicateBlock(source: LessonBlock): LessonBlock { return reIdBlock(source) }
+export function duplicateLesson(source: Lesson): Lesson { return { ...clone(source), id: uid('lesson'), title: `${source.title} (Bản sao)`, blocks: source.blocks.map(reIdBlock) } }
+export function duplicateModule(source: Module): Module { return { ...clone(source), id: uid('module'), title: `${source.title} (Bản sao)`, lessons: source.lessons.map(duplicateLesson) } }
 
 function duplicateWithNewIds(source: Course): Course {
   const moduleIds = new Map(source.modules.map((module) => [module.id, uid('module')]))
   const lessonIds = new Map(source.modules.flatMap((module) => module.lessons).map((lesson) => [lesson.id, uid('lesson')]))
-  const reIdBlock = (block: LessonBlock): LessonBlock => {
-    const id = uid('block')
-    switch (block.type) {
-      case 'quick_question': case 'multiple_choice': case 'multi_select': return { ...clone(block), id, options: block.options.map((option) => ({ ...option, id: uid('option') })) }
-      case 'scenario': return { ...clone(block), id, options: block.options.map((option) => ({ ...option, id: uid('option') })) }
-      case 'flashcard': return { ...clone(block), id, cards: block.cards.map((card) => ({ ...card, id: uid('card') })) }
-      case 'checklist': case 'sorting': return { ...clone(block), id, items: block.items.map((item) => ({ ...item, id: uid('item') })) }
-      case 'matching': return { ...clone(block), id, pairs: block.pairs.map((pair) => ({ ...pair, id: uid('pair') })) }
-      default: return { ...clone(block), id }
-    }
-  }
   const timestamp = now()
   return {
     ...clone(source), id: uid('course'), title: `${source.title} (Bản sao)`, publishStatus: 'draft', status: 'not-started', progress: 0, createdAt: timestamp, updatedAt: timestamp,
@@ -76,10 +105,10 @@ export function validateStore(value: unknown): value is ContentStore {
 
 export function createCourse(title = 'Khóa học mới'): Course {
   const timestamp = now()
-  return { id: uid('course'), title, description: '', category: 'Đào tạo nội bộ', durationMinutes: 30, level: 'Cơ bản', objectives: [], modules: [], publishStatus: 'draft', coverUrl: '', accentColor: '#2563eb', quiz: { id: uid('quiz'), passScore: 80, questions: [], xpReward: 100 }, gamification: { courseCompletionXp: 100, badges: [] }, status: 'not-started', progress: 0, createdAt: timestamp, updatedAt: timestamp }
+  return { id: uid('course'), title, description: '', detailedDescription: '', audience: 'Nhân viên bán lẻ', category: 'Đào tạo nội bộ', durationMinutes: 30, level: 'Cơ bản', objectives: [], modules: [], publishStatus: 'draft', coverUrl: '', accentColor: '#2563eb', quiz: { id: uid('quiz'), passScore: 80, questions: [], xpReward: 100 }, gamification: { courseCompletionXp: 100, completionMessage: 'Chúc mừng bạn đã hoàn thành khóa học!', badges: [] }, status: 'not-started', progress: 0, createdAt: timestamp, updatedAt: timestamp }
 }
-export function createModule(title = 'Module mới'): Module { return { id: uid('module'), title, xpReward: 20, lessons: [] } }
-export function createLesson(title = 'Bài học mới'): Lesson { return { id: uid('lesson'), title, durationMinutes: 10, required: true, xpReward: 50, blocks: [] } }
+export function createModule(title = 'Module mới'): Module { return { id: uid('module'), title, description: '', xpReward: 20, lessons: [] } }
+export function createLesson(title = 'Bài học mới'): Lesson { return { id: uid('lesson'), title, description: '', kind: 'content', durationMinutes: 10, required: true, xpReward: 50, blocks: [] } }
 export function createBlock(type: LessonBlock['type']): LessonBlock {
   const id = uid('block')
   switch (type) {
@@ -118,7 +147,7 @@ export class ContentService {
     try { const raw = this.storage?.getItem(CONTENT_STORAGE_KEY); if (!raw) return defaultStore(); const parsed: unknown = JSON.parse(raw); if (validateStore(parsed)) return clone(parsed); this.warning = 'Dữ liệu nội dung không hợp lệ. Đang dùng dữ liệu an toàn mặc định.' } catch { this.warning = 'Không thể đọc dữ liệu nội dung. Đang dùng dữ liệu an toàn mặc định.' }
     return defaultStore()
   }
-  private save(next: ContentStore): ContentStore { this.store = { ...clone(next), updatedAt: now() }; this.storage?.setItem(CONTENT_STORAGE_KEY, JSON.stringify(this.store)); window.dispatchEvent(new Event('fstudio-content-change')); return this.getStore() }
+  private save(next: ContentStore): ContentStore { const nextStore = { ...clone(next), updatedAt: now() }; this.storage?.setItem(CONTENT_STORAGE_KEY, JSON.stringify(nextStore)); this.store = nextStore; window.dispatchEvent(new Event('fstudio-content-change')); return this.getStore() }
   getWarning() { return this.warning }
   clearWarning() { this.warning = '' }
   getStore() { return clone(this.store) }

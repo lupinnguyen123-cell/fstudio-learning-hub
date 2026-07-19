@@ -33,8 +33,9 @@ export type LessonBlock =
   | (BlockBase & { type: 'module_challenge'; title: string; description: string })
   | (BlockBase & { type: 'unlock_condition'; description: string })
 
-export interface Lesson { id: string; title: string; durationMinutes: number; required: boolean; xpReward: number; blocks: LessonBlock[] }
-export interface Module { id: string; title: string; xpReward: number; lessons: Lesson[] }
+export type LessonKind = 'content' | 'video' | 'interactive' | 'quiz'
+export interface Lesson { id: string; title: string; description?: string; kind?: LessonKind; durationMinutes: number; required: boolean; xpReward: number; blocks: LessonBlock[] }
+export interface Module { id: string; title: string; description?: string; xpReward: number; lessons: Lesson[] }
 export type QuizQuestionType = 'multiple_choice' | 'true_false' | 'multi_select'
 export interface Question {
   id: string; type: QuizQuestionType; prompt: string; options: string[]; correctOptionIndexes: number[]
@@ -42,10 +43,10 @@ export interface Question {
   /** Compatibility for the existing single-choice UI. */ correctOptionIndex: number
 }
 export interface CourseQuiz { id: string; passScore: number; questions: Question[]; xpReward: number }
-export interface BadgeDefinition { id: string; name: string; description: string; condition: BadgeCondition }
-export interface GamificationConfig { badges: BadgeDefinition[]; courseCompletionXp: number }
+export interface BadgeDefinition { id: string; name: string; description: string; icon?: string; condition: BadgeCondition }
+export interface GamificationConfig { badges: BadgeDefinition[]; courseCompletionXp: number; completionMessage?: string }
 export interface Course {
-  id: string; title: string; description: string; category: string; durationMinutes: number
+  id: string; title: string; description: string; detailedDescription?: string; audience?: string; category: string; durationMinutes: number
   level: 'Cơ bản' | 'Trung cấp' | 'Nâng cao'; objectives: string[]; modules: Module[]
   publishStatus: PublishStatus; coverUrl: string; accentColor: string; quiz: CourseQuiz; gamification: GamificationConfig
   status: CourseStatus; progress: number; createdAt: string; updatedAt: string
