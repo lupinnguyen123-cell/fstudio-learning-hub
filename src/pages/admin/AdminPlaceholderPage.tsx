@@ -44,7 +44,7 @@ function Dashboard() {
     <>
       <div className="admin-page-heading">
         <div>
-          <span className="overline">Tổng quan vận hành</span>
+          <span className="ui-eyebrow">Tổng quan vận hành</span>
           <h1>Chào buổi sáng, Trainer</h1>
           <p>Nắm nhanh sức khỏe học tập trong toàn hệ thống.</p>
         </div>
@@ -130,7 +130,7 @@ function CoursesAdmin() {
     <>
       <div className="admin-page-heading">
         <div>
-          <span className="overline">Nội dung</span>
+          <span className="ui-eyebrow">Nội dung</span>
           <h1>Quản lý khóa học</h1>
           <p>12 khóa học · 4 draft · 7 published · 1 scheduled</p>
         </div>
@@ -230,7 +230,7 @@ function Editor() {
         </aside>
         <section className="editor-canvas">
           <div className="editor-title">
-            <span className="overline">Lesson 01</span>
+            <span className="ui-eyebrow">Lesson 01</span>
             <h1>Hiểu nhu cầu khách hàng</h1>
             <p>15 phút · Bắt buộc</p>
           </div>
@@ -288,7 +288,7 @@ function Analytics({ employees = false }: { employees?: boolean }) {
     <>
       <div className="admin-page-heading">
         <div>
-          <span className="overline">Insights</span>
+          <span className="ui-eyebrow">Insights</span>
           <h1>{employees ? "Employee Progress" : "Learning Analytics"}</h1>
           <p>{employees ? "Theo dõi tiến độ theo nhân viên, cửa hàng và nhóm được giao." : "Phát hiện điểm nghẽn theo nội dung, cửa hàng và khu vực."}</p>
         </div>

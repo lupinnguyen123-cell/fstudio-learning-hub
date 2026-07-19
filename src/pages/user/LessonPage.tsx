@@ -47,7 +47,7 @@ export function LessonPage() {
         <aside className="lesson-outline"><LessonOutline course={course} activeLessonId={lesson.id} completedLessonIds={progress.completedLessonIds} idPrefix="desktop-outline" /></aside>
         <div className="lesson-main">
           <header className="lesson-header">
-            <span className="overline">Module {moduleIndex + 1}</span>
+            <span className="ui-eyebrow">Module {moduleIndex + 1}</span>
             <h1>{lesson.title}</h1>
             <div className="lesson-header-meta">
               <span><Clock3 />{lesson.durationMinutes} phút</span>
