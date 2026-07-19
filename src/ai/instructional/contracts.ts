@@ -1,0 +1,2 @@
+export type InstructionalErrorCode = 'INSTRUCTIONAL_SOURCE_MISSING' | 'INSTRUCTIONAL_ANALYSIS_FAILED' | 'INSTRUCTIONAL_INVALID_RESPONSE' | 'INSTRUCTIONAL_SCHEMA_ERROR' | 'INSTRUCTIONAL_COVERAGE_LOW' | 'INSTRUCTIONAL_PROVIDER_NOT_CONFIGURED' | 'INSTRUCTIONAL_TIMEOUT'
+export class InstructionalClientError extends Error { readonly code: InstructionalErrorCode; constructor(code: InstructionalErrorCode, message: string) { super(message); this.name = 'InstructionalClientError'; this.code = code } }

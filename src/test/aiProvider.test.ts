@@ -13,7 +13,7 @@ import type { GenerateCourseRequest } from '../ai/contracts'
 const service = new AiCourseService(null)
 const source = service.analyzeSource({ name: 'source.md', size: 400, type: 'text/markdown' }, 'Nội dung đào tạo bán lẻ đủ dài để kiểm tra nhu cầu khách hàng, kiến thức sản phẩm và cách áp dụng tại cửa hàng F.Studio.').source
 const draft = service.generateCourseDraft(source, 'product')
-const document = { schemaVersion: 1 as const, sourceId: source.id, fileName: source.fileName, format: 'markdown' as const, metadata: { title: 'Source', wordCount: 24 }, sections: [{ title: 'Nội dung', level: 1, elements: [{ type: 'paragraph' as const, content: source.extractedText, retailSignals: ['product' as const] }] }], normalizedText: source.extractedText, detectedSignals: ['product' as const], qualityScore: 80 }
+const document = { schemaVersion: 1 as const, sourceId: source.id, fileName: source.fileName, format: 'markdown' as const, metadata: { title: 'Source', wordCount: 24 }, sections: [{ id: 'section-source', title: 'Nội dung', level: 1, elements: [{ id: 'element-source', type: 'paragraph' as const, content: source.extractedText, retailSignals: ['product' as const] }] }], normalizedText: source.extractedText, detectedSignals: ['product' as const], qualityScore: 80 }
 const request: GenerateCourseRequest = { document, courseType: 'product', language: 'vi', tone: 'professional_friendly', audience: 'Nhân viên', desiredLessonLength: 'short', includeQuiz: true, includeScenario: true, includeFlashcards: true, retailContext: 'F.Studio', requestId: 'request_12345678' }
 
 describe('AI provider abstraction and validation', () => {

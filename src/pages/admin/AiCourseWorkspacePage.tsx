@@ -2,10 +2,15 @@ import { AlertTriangle, ArrowRight, Check, FileSearch, FileText, LoaderCircle, R
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { aiClient } from '../../ai/aiClient'
-import { AiClientError, type GenerateCourseRequest } from '../../ai/contracts'
+import { InstructionalClientError } from '../../ai/instructional/contracts'
+import { analyzeInstructionalDesign } from '../../ai/instructional/instructionalDesignerClient'
+import { createRuleBasedInstructionalGraph } from '../../ai/instructional/fallbackEngine'
+import type { InstructionalAnalysisRequest, InstructionalGraph } from '../../ai/instructional/instructionalGraph'
+import { instructionalGraphService } from '../../ai/instructional/instructionalPersistence'
 import { ConfirmDialog } from '../../components/admin/ConfirmDialog'
 import { AdvancedAiReviewWorkspace } from '../../features/ai-authoring/AdvancedAiReviewWorkspace'
 import { DocumentPreview } from '../../features/ai-authoring/DocumentPreview'
+import { InstructionalReviewWorkspace } from '../../features/ai-authoring/InstructionalReviewWorkspace'
 import type { AiCourseDraft, AiImportedFile, AiImportPhase, AiPresetId, AiReviewSelection } from '../../features/ai-authoring/types'
 import { type RegenerateAction, type RegenerateProposal } from '../../features/ai-authoring/aiReviewActions'
 import { aiCourseService, aiProcessingStages } from '../../services/aiCourseService'
@@ -21,14 +26,18 @@ const requestId = () => `ai_${globalThis.crypto?.randomUUID?.() ?? `${Date.now()
 export function AiCourseWorkspacePage() {
   const navigate = useNavigate()
   const existingDraft = useMemo(() => aiCourseService.loadDraft(), [])
-  const [phase, setPhase] = useState<AiImportPhase>(existingDraft ? 'review' : 'import')
+  const existingGraph = useMemo(() => instructionalGraphService.load(), [])
+  const [phase, setPhase] = useState<AiImportPhase>(existingGraph ? existingGraph.status === 'approved' ? 'instructional_approved' : 'instructional_review' : existingDraft ? 'review' : 'import')
   const [imported, setImported] = useState<AiImportedFile | null>(null)
   const [sourceText, setSourceText] = useState('')
   const [document, setDocument] = useState<StructuredDocument | null>(null)
   const [preset, setPreset] = useState<AiPresetId>(existingDraft?.preset ?? 'product')
   const [stageIndex, setStageIndex] = useState(0)
   const [draft, setDraft] = useState<AiCourseDraft | null>(existingDraft)
-  const [notice, setNotice] = useState(existingDraft ? 'Đã khôi phục AI draft gần nhất.' : '')
+  const [graph, setGraph] = useState<InstructionalGraph | null>(existingGraph)
+  const [audience, setAudience] = useState(existingGraph?.audience ?? 'Nhân viên tư vấn F.Studio')
+  const [trainerGoal, setTrainerGoal] = useState(existingGraph?.overallLearningGoal ?? '')
+  const [notice, setNotice] = useState(existingGraph ? 'Đã khôi phục Instructional Graph gần nhất.' : existingDraft ? 'Đã khôi phục AI draft cũ để bảo toàn dữ liệu.' : '')
   const [discardOpen, setDiscardOpen] = useState(false)
   const [lastRequestAt, setLastRequestAt] = useState(0)
   const requestController = useRef<AbortController | null>(null)
@@ -56,28 +65,26 @@ export function AiCourseWorkspacePage() {
     catch { setNotice('Hãy nhập nội dung nguồn hợp lệ trước khi tiếp tục.') }
   }
 
-  const generateRequest = (analysis: AiImportedFile, structured: StructuredDocument): GenerateCourseRequest => ({ document: documentService.toAiHandoff(structured), courseType: preset, language: 'vi', tone: 'professional_friendly', audience: 'Nhân viên tư vấn F.Studio', desiredModuleCount: analysis.estimatedModules, desiredLessonLength: 'short', includeQuiz: true, includeScenario: true, includeFlashcards: true, retailContext: 'Đào tạo bán lẻ F.Studio, ưu tiên áp dụng tại quầy.', requestId: requestId() })
+  const instructionalRequest = (structured: StructuredDocument): InstructionalAnalysisRequest => ({ document: documentService.toAiHandoff(structured), courseType: preset, audience: audience.trim(), trainingContext: 'Đào tạo nhân viên bán lẻ F.Studio tại cửa hàng.', desiredLearningDuration: 45, desiredLessonLength: 'short', includeAssessment: true, retailContext: 'F.Studio retail consultation', sourceLanguage: 'vi', outputLanguage: 'vi', trainerGoal: trainerGoal.trim() || undefined, requestId: requestId() })
   const process = async () => {
     let analysis = imported; let structured = document
     if (sourceText.trim() && (!analysis || analysis.source.extractedText !== sourceText.trim())) { try { analysis = aiCourseService.analyzeText(sourceText); structured = await documentService.parseText(sourceText); setImported(analysis); setDocument(structured) } catch { analysis = null; structured = null } }
-    if (!analysis || !structured) { setNotice('Hãy parse nội dung nguồn trước khi Generate.'); return }
+    if (!analysis || !structured) { setNotice('Hãy parse nội dung nguồn trước khi phân tích.'); return }
+    if (!audience.trim()) { setNotice('Cần nhập đối tượng học trước khi phân tích.'); return }
     if (structured.status !== 'parsed') { setNotice('Định dạng đã nhận diện nhưng parser chưa khả dụng. AI không nhận raw file hoặc placeholder.'); return }
     if (Date.now() - lastRequestAt < 2_000) { setNotice('Vui lòng chờ trước khi gửi yêu cầu AI tiếp theo.'); return }
     setLastRequestAt(Date.now()); setStageIndex(0); setPhase('processing'); setNotice('')
     const controller = new AbortController(); requestController.current = controller
     try {
-      const response = await aiClient.generateCourse(generateRequest(analysis, structured), controller.signal)
-      const validation = aiCourseService.validateCourseDraft(response.draft)
-      if (validation.errors.length) throw new AiClientError('AI_SCHEMA_VALIDATION_FAILED', 'AI Draft không vượt qua validation.')
-      aiCourseService.saveDraft(response.draft); setDraft(response.draft); setPhase('review'); setNotice(response.isMock || response.draft.generation?.isMock ? 'Đây là kết quả mô phỏng, không phải AI provider thật.' : `AI Draft đã tạo bằng ${response.provider} · ${response.model}.`)
-    } catch (error) { if (controller.signal.aborted) setNotice('Đã hủy yêu cầu AI. Source vẫn được giữ nguyên.'); else setNotice(error instanceof AiClientError ? error.message : 'Không thể tạo AI Draft.'); setPhase('failed') }
+      const response = await analyzeInstructionalDesign(instructionalRequest(structured), controller.signal)
+      const saved = instructionalGraphService.save(response.graph); setGraph(saved); setPhase('instructional_review'); setNotice(response.analysisType === 'rule_based' ? 'Kết quả rule-based cần Trainer xác minh.' : `Instructional Graph đã tạo bằng ${response.provider} · ${response.model}.`)
+    } catch (error) { if (controller.signal.aborted) setNotice('Đã hủy yêu cầu. Source vẫn được giữ nguyên.'); else setNotice(error instanceof InstructionalClientError ? error.message : 'Không thể tạo Instructional Graph.'); setPhase('failed') }
     finally { requestController.current = null }
   }
   const useDevelopmentMock = () => {
-    if (!import.meta.env.DEV || !imported) return
-    const mock = aiCourseService.generateCourseDraft(imported.source, preset)
-    const marked = { ...mock, generation: { provider: 'mock', model: 'deterministic-local', generatedAt: new Date().toISOString(), latencyMs: 0, isMock: true } }
-    aiCourseService.saveDraft(marked); setDraft(marked); setPhase('review'); setNotice('Đây là kết quả mô phỏng, không phải AI provider thật.')
+    if (!document) return
+    const fallback = instructionalGraphService.save(createRuleBasedInstructionalGraph(instructionalRequest(document)))
+    setGraph(fallback); setPhase('instructional_review'); setNotice('Rule-based analysis — không phải AI provider thật.')
   }
   const cancelGeneration = () => requestController.current?.abort()
 
@@ -95,17 +102,21 @@ export function AiCourseWorkspacePage() {
     catch { setNotice('Không thể tạo course. Course hiện có và AI draft vẫn được giữ nguyên.') }
   }
   const discard = () => { if (draft) aiCourseService.discardDraft(draft.id); setDraft(null); setImported(null); setDocument(null); setSourceText(''); setPhase('discarded'); setDiscardOpen(false); setNotice('AI draft đã được loại bỏ.') }
+  const discardGraph = () => { if (graph) instructionalGraphService.discard(graph.id); setGraph(null); setImported(null); setDocument(null); setSourceText(''); setPhase('discarded'); setDiscardOpen(false); setNotice('Instructional Graph đã được loại bỏ. Course production không bị ảnh hưởng.') }
+  const approveGraph = (approved: InstructionalGraph) => { const saved = instructionalGraphService.save(approved); setGraph(saved); setPhase('instructional_approved'); setNotice('Instructional Graph đã được duyệt và sẵn sàng cho AI-6. Chưa tạo Course production.') }
 
   return <section className="ai-workspace">
-    <ConfirmDialog open={discardOpen} title="Discard AI draft?" description="Bản review hiện tại sẽ bị xóa khỏi AI draft storage. Course production không bị ảnh hưởng." onCancel={() => setDiscardOpen(false)} onConfirm={discard} />
+    <ConfirmDialog open={discardOpen} title="Loại bỏ bản phân tích?" description="Bản review hiện tại sẽ bị xóa khỏi storage riêng. Course production không bị ảnh hưởng." onCancel={() => setDiscardOpen(false)} onConfirm={graph ? discardGraph : discard} />
     <header className="ai-workspace-hero"><div><span className="ui-eyebrow"><WandSparkles /> AI Course Authoring</span><h1>Biến tài liệu thành bản nháp khóa học</h1><p>Nội dung text được gửi tới AI provider qua Netlify Function. API key không xuất hiện trong trình duyệt.</p></div><span className="ai-local-badge"><ShieldCheck /> Server-side AI · Trainer review bắt buộc</span></header>
-    <nav className="ai-stepper" aria-label="Quy trình AI Course"><span className={phase === 'import' ? 'active' : 'done'}>1. Import</span><span className={phase === 'processing' ? 'active' : phase === 'review' || phase === 'approved' ? 'done' : ''}>2. Generate</span><span className={phase === 'review' ? 'active' : phase === 'approved' ? 'done' : ''}>3. Review</span><span className={phase === 'approved' ? 'active' : ''}>4. Approve</span></nav>
+    <nav className="ai-stepper" aria-label="Quy trình AI Course"><span className={phase === 'import' ? 'active' : 'done'}>1. Import</span><span className={phase === 'processing' ? 'active' : phase.includes('review') || phase.includes('approved') ? 'done' : ''}>2. Analyze</span><span className={phase.includes('review') ? 'active' : phase.includes('approved') ? 'done' : ''}>3. Review</span><span className={phase.includes('approved') ? 'active' : ''}>4. Approve graph</span></nav>
     {notice && <div className={`builder-notice ${phase === 'approved' ? 'ready' : ''}`} role="status">{notice}</div>}
     {(phase === 'import' || phase === 'discarded') && document && <DocumentPreview document={document} rawText={sourceText} />}
-    {(phase === 'import' || phase === 'discarded') && <section className="ai-import-card"><div className="ai-upload-zone"><Upload /><h2>{phase === 'discarded' ? 'Draft đã được loại bỏ' : 'Import nguồn text'}</h2><p>TXT/Markdown được đọc trực tiếp. PDF, PPTX và DOCX cần dán extracted text vì chưa có parser thật.</p><label className="button button-secondary">Chọn file<input type="file" accept={acceptedTypes} onChange={(event) => void importFile(event.target.files?.[0])} /></label></div><label className="cms-field ai-source-text"><span>Nội dung nguồn</span><textarea value={sourceText} onChange={(event) => setSourceText(event.target.value)} placeholder="Dán nội dung đào tạo, TXT hoặc Markdown…" /><small>{sourceText.length.toLocaleString('vi-VN')} ký tự</small></label><button type="button" className="button button-secondary" onClick={preparePastedText}>Kiểm tra nguồn</button>{imported && <div className="ai-file-preview"><span><FileText /></span><div><strong>{imported.source.fileName}</strong><small>{formatSize(imported.source.fileSize)} · {imported.source.metadata.extractionMode}</small></div><dl><div><dt>Estimated Modules</dt><dd>{imported.estimatedModules}</dd></div><div><dt>Estimated Lessons</dt><dd>{imported.estimatedLessons}</dd></div></dl><label className="cms-field ai-preset-select"><span>Preset</span><select value={preset} onChange={(event) => setPreset(event.target.value as AiPresetId)}><option value="product">Product Training</option><option value="sales">Sales Training</option><option value="campaign">Campaign Training</option></select></label><button type="button" className="button button-primary" onClick={() => void process()}>Tạo bản nháp AI <ArrowRight /></button></div>}</section>}
+    {(phase === 'import' || phase === 'discarded') && <section className="ai-import-card"><div className="ai-upload-zone"><Upload /><h2>{phase === 'discarded' ? 'Bản phân tích đã được loại bỏ' : 'Import nguồn đã chuẩn hóa'}</h2><p>Instructional Designer chỉ nhận Normalized Document, không nhận raw binary.</p><label className="button button-secondary">Chọn file<input type="file" accept={acceptedTypes} onChange={(event) => void importFile(event.target.files?.[0])} /></label></div><label className="cms-field ai-source-text"><span>Nội dung nguồn</span><textarea value={sourceText} onChange={(event) => setSourceText(event.target.value)} placeholder="Dán nội dung đào tạo, TXT hoặc Markdown…" /><small>{sourceText.length.toLocaleString('vi-VN')} ký tự</small></label><div className="instructional-inputs"><label className="cms-field"><span>Đối tượng học *</span><input value={audience} onChange={(event) => setAudience(event.target.value)} /></label><label className="cms-field"><span>Mục tiêu Trainer (tùy chọn)</span><input value={trainerGoal} onChange={(event) => setTrainerGoal(event.target.value)} placeholder="Ví dụ: áp dụng vào tư vấn tại quầy" /></label></div><button type="button" className="button button-secondary" onClick={preparePastedText}>Kiểm tra nguồn</button>{imported && <div className="ai-file-preview"><span><FileText /></span><div><strong>{imported.source.fileName}</strong><small>{formatSize(imported.source.fileSize)} · {imported.source.metadata.extractionMode}</small></div><dl><div><dt>Estimated Modules</dt><dd>{imported.estimatedModules}</dd></div><div><dt>Estimated Lessons</dt><dd>{imported.estimatedLessons}</dd></div></dl><label className="cms-field ai-preset-select"><span>Preset</span><select value={preset} onChange={(event) => setPreset(event.target.value as AiPresetId)}><option value="product">Product Training</option><option value="sales">Sales Training</option><option value="campaign">Campaign Training</option></select></label><button type="button" className="button button-primary" onClick={() => void process()}>Phân tích cấu trúc học tập <ArrowRight /></button></div>}</section>}
     {phase === 'processing' && <section className="ai-processing" aria-live="polite"><span className="ai-processing-icon"><LoaderCircle className="spin" /></span><span className="ui-eyebrow">Server-side AI Processing</span><h2>{aiProcessingStages[stageIndex]}</h2><p>{imported?.source.fileName}</p><div className="ai-processing-track"><span style={{ width: `${((stageIndex + 1) / aiProcessingStages.length) * 100}%` }} /></div><ol>{aiProcessingStages.map((stage, index) => <li className={index < stageIndex ? 'done' : index === stageIndex ? 'active' : ''} key={stage}>{index < stageIndex ? <Check /> : <FileSearch />}{stage}</li>)}</ol><button type="button" className="button button-secondary" onClick={cancelGeneration}><X /> Hủy yêu cầu</button></section>}
-    {phase === 'failed' && <section className="ai-state-panel" role="alert"><AlertTriangle /><h2>Không thể tạo AI draft</h2><p>Source và Course hiện có không bị thay đổi.</p><div><button type="button" className="button button-primary" onClick={() => void process()}><RotateCcw /> Thử lại</button><button type="button" className="button button-secondary" onClick={() => setPhase('import')}>Quay về chỉnh nguồn</button>{import.meta.env.DEV && imported && <button type="button" className="button button-secondary" onClick={useDevelopmentMock}>Dùng mock draft (development)</button>}</div></section>}
+    {phase === 'failed' && <section className="ai-state-panel" role="alert"><AlertTriangle /><h2>Không thể phân tích instructional design</h2><p>Source, AI draft cũ và Course production không bị thay đổi.</p><div><button type="button" className="button button-primary" onClick={() => void process()}><RotateCcw /> Thử lại</button><button type="button" className="button button-secondary" onClick={() => setPhase('import')}>Quay về chỉnh nguồn</button>{document && <button type="button" className="button button-secondary" onClick={useDevelopmentMock}>Dùng rule-based analysis</button>}</div></section>}
     {phase === 'review' && draft && <AdvancedAiReviewWorkspace initialDraft={draft} onApprove={approve} onDiscard={(current) => { setDraft(current); setDiscardOpen(true) }} onRegenerate={regenerate} />}
+    {phase === 'instructional_review' && graph && <InstructionalReviewWorkspace initialGraph={graph} onApprove={approveGraph} onDiscard={(current) => { setGraph(current); setDiscardOpen(true) }} onArchive={(current) => { instructionalGraphService.archive(current.id); setGraph(null); setPhase('import'); setNotice('Instructional Graph đã được lưu trữ.') }} />}
+    {phase === 'instructional_approved' && graph && <section className="ai-state-panel ready"><ShieldCheck /><h2>Instructional Graph đã được duyệt</h2><p>Sẵn sàng chuyển sang Course Draft ở AI-6. Chưa tạo Course, block production hoặc publish.</p><button type="button" className="button button-secondary" onClick={() => setPhase('instructional_review')}>Mở lại review</button></section>}
   </section>
 }
 

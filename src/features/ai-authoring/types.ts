@@ -1,4 +1,4 @@
-export type AiImportPhase = 'import' | 'processing' | 'review' | 'approved' | 'failed' | 'discarded'
+export type AiImportPhase = 'import' | 'processing' | 'review' | 'approved' | 'instructional_review' | 'instructional_approved' | 'failed' | 'discarded'
 export type AiProcessingStage = 'Analyzing...' | 'Extracting...' | 'Creating Modules...' | 'Creating Lessons...' | 'Generating Quiz...'
 export type AiDraftStatus = 'analyzing' | 'ready' | 'needs_review' | 'approved' | 'discarded'
 export type AiConfidence = 'high' | 'medium' | 'low'
