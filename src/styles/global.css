@@ -264,3 +264,10 @@ p{color:var(--color-text-secondary)}
 @media(max-width:1023px){.lesson-main{max-width:884px;padding-inline:32px}.lesson-outline-drawer>aside{overflow-x:hidden}.lesson-outline-drawer .lesson-outline-nav{width:100%}}
 @media(max-width:767px){.lesson-main{padding-inline:20px}.lesson-player{padding-inline:0}.lesson-outline-drawer>aside{width:min(100%,430px);padding:16px}.lesson-outline-nav section{width:100%}.lesson-outline-module{min-height:60px}.lesson-outline-nav .lesson-outline-lessons a{min-height:52px}}
 .lesson-outline-nav section{padding:16px}.lesson-outline-module{padding:0}.lesson-outline-lessons{padding-top:14px}
+
+/* Typography density and wide-screen alignment */
+.lesson-topbar,.lesson-player{width:min(1440px,calc(100% - 32px));max-width:1440px}.lesson-main{max-width:1040px}.lesson-header h1{max-width:none;padding-right:180px}.lesson-main .lesson-article,.lesson-navigation{width:min(100%,940px);max-width:940px}.lesson-section-header{max-width:940px}.lesson-section-header h2,.lesson-section-header h3{max-width:100%;overflow-wrap:normal;word-break:normal}.lesson-outline{width:360px;min-width:340px;max-width:360px}.lesson-outline-module strong{font-size:14px}.lesson-outline-title{font-size:13px}.lesson-outline-duration{font-size:11px}.lesson-outline-nav .lesson-outline-lessons a{min-height:52px;gap:10px}
+@media(min-width:1280px){.lesson-player{grid-template-columns:360px minmax(0,1fr);gap:40px}.lesson-main{padding-inline:48px}.lesson-header h1{white-space:normal}}
+@media(min-width:1024px) and (max-width:1279px){.lesson-header h1{max-width:28ch;padding-right:160px}.lesson-outline{width:340px;min-width:340px}.lesson-player{grid-template-columns:340px minmax(0,1fr)}}
+@media(max-width:1023px){.lesson-header h1{max-width:28ch;padding-right:160px}.lesson-main .lesson-article,.lesson-navigation{max-width:900px}}
+@media(max-width:767px){.lesson-topbar,.lesson-player{width:100%}.lesson-header h1{max-width:100%;padding-right:0}.lesson-section-header h2,.lesson-section-header h3{max-width:100%}}

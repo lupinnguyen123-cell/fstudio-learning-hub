@@ -36,7 +36,7 @@ export function LessonOutline({ course, activeLessonId, completedLessonIds, idPr
               onClick={() => setExpandedModule(expanded ? -1 : moduleIndex)}
             >
               <span>{moduleComplete ? <Check /> : moduleIndex + 1}</span>
-              <span><small>Module {moduleIndex + 1}</small><strong>{module.title}</strong></span>
+              <span><small>Module {moduleIndex + 1}</small><strong title={module.title}>{module.title}</strong></span>
               <ChevronDown />
             </button>
             {expanded && (
@@ -54,7 +54,7 @@ export function LessonOutline({ course, activeLessonId, completedLessonIds, idPr
                       onClick={onNavigate}
                     >
                       <span className="lesson-number">{done ? <Check /> : current ? <Play /> : lessonNumber}</span>
-                      <span className="lesson-outline-title">{lesson.title}</span>
+                      <span className="lesson-outline-title" title={lesson.title}>{lesson.title}</span>
                       <small className="lesson-outline-duration">{lesson.durationMinutes} phút</small>
                     </Link>
                   )
