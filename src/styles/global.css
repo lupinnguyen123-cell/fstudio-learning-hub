@@ -116,3 +116,7 @@ body{background:var(--app-background);color:var(--app-text)}
 @media(max-width:719px){.block-picker section>div{grid-template-columns:1fr}.thumbnail-preview{min-height:100px}.course-completeness{padding:14px}.builder-tabs button{padding-inline:11px}}
 .module-description{margin-top:12px}.module-description textarea{min-height:66px}.module-summary{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.module-summary span{padding:5px 8px;border-radius:8px;background:#fff;color:var(--muted);font-size:11px}.badge-icon-input{max-width:70px;text-align:center;font-size:20px}
 @media(min-width:720px){.badge-editor{grid-template-columns:70px 1fr 1.4fr 1fr auto}}
+
+/* Pilot touch targets for narrow screens. */
+.filter-tabs button,.block-picker button,.sorting-list button,.validation-panel button,.course-completeness button{min-height:44px}
+.sorting-list button{width:44px;height:44px}

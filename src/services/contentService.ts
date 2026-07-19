@@ -155,6 +155,7 @@ export class ContentService {
   getCourse(id: string, role: 'employee' | 'trainer' = 'employee') { return this.getCourses(role).find((course) => course.id === id) }
   addCourse(course = createCourse()) { return this.save({ ...this.store, courses: [...this.store.courses, course] }) }
   updateCourse(course: Course) { return this.save({ ...this.store, courses: this.store.courses.map((item) => item.id === course.id ? { ...clone(course), updatedAt: now() } : item) }) }
+  upsertCourse(course: Course) { return this.store.courses.some((item) => item.id === course.id) ? this.updateCourse(course) : this.addCourse(course) }
   deleteCourse(id: string) { return this.save({ ...this.store, courses: this.store.courses.filter((course) => course.id !== id) }) }
   duplicateCourse(id: string) { const course = this.store.courses.find((item) => item.id === id); if (!course) return null; const duplicate = duplicateWithNewIds(course); this.addCourse(duplicate); return duplicate }
   setPublishStatus(id: string, status: PublishStatus) { const course = this.store.courses.find((item) => item.id === id); return course ? this.updateCourse({ ...course, publishStatus: status }) : this.getStore() }

@@ -1,19 +1,20 @@
 import { describe, expect, it } from 'vitest'
 import { courseCatalog, quizQuestions } from '../data/courses'
 import { createDefaultProgress, readProgress, resetProgress, writeProgress, type StorageAdapter } from '../services/progressService'
-import { addCompletedLesson, calculateCourseProgress, getContinueLesson, getContinuePath, getNextLesson, isQuizUnlocked } from '../utils/courseProgress'
+import { addCompletedLesson, calculateCourseProgress, courseStatusFromProgress, getContinueLesson, getContinuePath, getNextLesson, isQuizUnlocked } from '../utils/courseProgress'
 import { getNextAttemptNumber, gradeQuiz, isPassingScore, PASS_SCORE } from '../utils/quiz'
 
 const course = courseCatalog[0]
 describe('learning progress', () => {
   it('starts at zero and never exceeds 100 percent', () => { expect(calculateCourseProgress(course, [])).toBe(0); expect(calculateCourseProgress(course, [...course.modules.flatMap((module) => module.lessons.map((lesson) => lesson.id)), 'unknown', 'lesson-1'])).toBe(100) })
-  it('calculates course percentage', () => expect(calculateCourseProgress(course, ['lesson-1', 'lesson-2', 'lesson-3'])).toBe(50))
+  it('calculates course percentage from required lessons', () => expect(calculateCourseProgress(course, ['lesson-needs', 'lesson-segments', 'lesson-air'])).toBe(43))
   it('ignores optional lessons in the percentage', () => { const optionalCourse = structuredClone(course); optionalCourse.modules[0].lessons.push({ ...optionalCourse.modules[0].lessons[0], id: 'optional-1', required: false }); expect(calculateCourseProgress(optionalCourse, ['optional-1'])).toBe(0) })
   it('does not duplicate completed lessons', () => expect(addCompletedLesson(['lesson-1'], 'lesson-1')).toEqual(['lesson-1']))
-  it('finds the next lesson', () => expect(getNextLesson(course, 'lesson-2')?.id).toBe('lesson-3'))
-  it('determines continue learning', () => expect(getContinueLesson(course, ['lesson-1'], 'lesson-1')?.id).toBe('lesson-2'))
-  it('routes continue learning to first lesson, quiz, then results', () => { const allIds = course.modules.flatMap((module) => module.lessons.map((lesson) => lesson.id)); expect(getContinuePath(course, [], null, null)).toBe('/learn/mac-back-to-school/lesson-1'); expect(getContinuePath(course, allIds, 'lesson-6', null)).toBe('/quiz/mac-back-to-school'); const passed = gradeQuiz(course.id, quizQuestions, Object.fromEntries(quizQuestions.map((question) => [question.id, question.correctOptionIndex])), 1); expect(getContinuePath(course, allIds, 'lesson-6', passed)).toBe('/results/mac-back-to-school') })
-  it('locks and unlocks quiz', () => { expect(isQuizUnlocked(course, ['lesson-1'])).toBe(false); expect(isQuizUnlocked(course, course.modules.flatMap((module) => module.lessons.map((lesson) => lesson.id)))).toBe(true) })
+  it('finds the next lesson', () => expect(getNextLesson(course, 'lesson-segments')?.id).toBe('lesson-air'))
+  it('determines continue learning', () => expect(getContinueLesson(course, ['lesson-needs'], 'lesson-needs')?.id).toBe('lesson-segments'))
+  it('routes continue learning to first lesson, quiz, then results', () => { const allIds = course.modules.flatMap((module) => module.lessons.map((lesson) => lesson.id)); expect(getContinuePath(course, [], null, null)).toBe('/learn/mac-back-to-school/lesson-needs'); expect(getContinuePath(course, allIds, 'lesson-quiz-intro', null)).toBe('/quiz/mac-back-to-school'); const passed = gradeQuiz(course.id, quizQuestions, Object.fromEntries(quizQuestions.map((question) => [question.id, question.correctOptionIndex])), 1); expect(getContinuePath(course, allIds, 'lesson-quiz-intro', passed)).toBe('/results/mac-back-to-school') })
+  it('locks and unlocks quiz', () => { expect(isQuizUnlocked(course, ['lesson-needs'])).toBe(false); expect(isQuizUnlocked(course, course.modules.flatMap((module) => module.lessons.map((lesson) => lesson.id)))).toBe(true) })
+  it('marks a course complete only after lesson progress and a passed quiz', () => { expect(courseStatusFromProgress(100, false)).toBe('in-progress'); expect(courseStatusFromProgress(99, true)).toBe('in-progress'); expect(courseStatusFromProgress(100, true)).toBe('completed') })
 })
 
 describe('quiz grading', () => {
@@ -27,5 +28,5 @@ describe('quiz grading', () => {
 describe('progress storage', () => {
   it('recovers safely from corrupted storage', () => { const values = new Map([['fstudio-learning-progress', '{broken']]); const storage: StorageAdapter = { getItem: (key) => values.get(key) ?? null, setItem: (key, value) => { values.set(key, value) }, removeItem: (key) => { values.delete(key) } }; expect(readProgress(storage)).toMatchObject({ schemaVersion: createDefaultProgress().schemaVersion, completedLessonIds: [] }) })
   it('resets storage to the initial state', () => { const values = new Map([['fstudio-learning-progress', '{}']]); const storage: StorageAdapter = { getItem: (key) => values.get(key) ?? null, setItem: (key, value) => { values.set(key, value) }, removeItem: (key) => { values.delete(key) } }; expect(resetProgress(storage)).toMatchObject({ completedLessonIds: [], currentLessonId: null, currentCourseId: null, quizAttempts: [] }); expect(values.has('fstudio-learning-progress')).toBe(false) })
-  it('preserves lesson progress across a storage reload', () => { const values = new Map<string, string>(); const storage: StorageAdapter = { getItem: (key) => values.get(key) ?? null, setItem: (key, value) => { values.set(key, value) }, removeItem: (key) => { values.delete(key) } }; writeProgress({ ...createDefaultProgress(), completedLessonIds: ['lesson-1'], courseProgress: { [course.id]: 17 } }, storage); expect(readProgress(storage)).toMatchObject({ completedLessonIds: ['lesson-1'], courseProgress: { [course.id]: 17 } }) })
+  it('preserves lesson progress across a storage reload', () => { const values = new Map<string, string>(); const storage: StorageAdapter = { getItem: (key) => values.get(key) ?? null, setItem: (key, value) => { values.set(key, value) }, removeItem: (key) => { values.delete(key) } }; writeProgress({ ...createDefaultProgress(), completedLessonIds: ['lesson-needs'], courseProgress: { [course.id]: 14 } }, storage); expect(readProgress(storage)).toMatchObject({ completedLessonIds: ['lesson-needs'], courseProgress: { [course.id]: 14 } }) })
 })

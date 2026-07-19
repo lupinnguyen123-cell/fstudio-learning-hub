@@ -9,7 +9,7 @@ export function ContentProvider({ children }: { children: ReactNode }) {
   const [store, setStore] = useState(contentService.getStore())
   const refresh = useCallback(() => setStore(contentService.getStore()), [])
   useEffect(() => { window.addEventListener('fstudio-content-change', refresh); return () => window.removeEventListener('fstudio-content-change', refresh) }, [refresh])
-  const saveCourse = useCallback((course: Course) => { contentService.updateCourse(course); refresh() }, [refresh])
+  const saveCourse = useCallback((course: Course) => { contentService.upsertCourse(course); refresh() }, [refresh])
   const reset = useCallback(() => { contentService.reset(); refresh() }, [refresh])
   const value = useMemo(() => ({ store, warning: contentService.getWarning(), refresh, saveCourse, reset }), [refresh, reset, saveCourse, store])
   return <ContentContext.Provider value={value}>{children}</ContentContext.Provider>
