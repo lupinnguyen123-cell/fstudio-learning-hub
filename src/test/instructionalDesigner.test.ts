@@ -5,7 +5,7 @@ import { addObjective, deleteObjective, dismissInstructionalWarning, markObjecti
 import type { InstructionalAnalysisRequest, InstructionalGraph } from '../ai/instructional/instructionalGraph'
 import { validateInstructionalGraph } from '../ai/instructional/instructionalValidation'
 import { parseInstructionalGraph } from '../../netlify/functions/_shared/ai/instructional/responseParser'
-import type { StorageLike } from '../services/contentService'
+import type { StorageLike } from '../services/contentFactories'
 
 const request: InstructionalAnalysisRequest = {
   document: { schemaVersion: 1, sourceId: 'doc-1', fileName: 'mac.md', format: 'markdown', metadata: { title: 'Tư vấn Mac', wordCount: 180 }, sections: [

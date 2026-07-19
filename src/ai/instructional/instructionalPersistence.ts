@@ -1,4 +1,4 @@
-import type { StorageLike } from '../../services/contentService'
+import type { StorageLike } from '../../services/contentFactories'
 import type { InstructionalGraph } from './instructionalGraph'
 
 export const INSTRUCTIONAL_GRAPH_STORAGE_KEY = 'fstudio_ai_instructional_graphs'

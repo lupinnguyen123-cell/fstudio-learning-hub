@@ -1,4 +1,4 @@
-import { createCourse, createLesson, createModule, type StorageLike } from './contentService'
+import { createCourse, createLesson, createModule, type StorageLike } from './contentFactories'
 import type { Course, LessonBlock, Question } from '../types'
 import type { AiCourseDraft, AiDraftBlock, AiDraftModule, AiDraftQuestion, AiDraftValidation, AiDraftWarning, AiImportedFile, AiPresetId, AiProcessingStage, AiSourceDocument } from '../features/ai-authoring/types'
 
