@@ -47,3 +47,19 @@ AI review drafts use the isolated key `fstudio_ai_course_drafts`. Up to five rec
 ## Future integration seam
 
 A real parser/provider can replace source extraction and `generateCourseDraft` behind the same service/model boundary. Provider calls must use a protected backend or Edge Function; secrets must never be exposed to the frontend. Trainer validation and explicit approval remain mandatory.
+
+## AI-3 review workspace
+
+The advanced review layer remains entirely inside the AI draft boundary. `AdvancedAiReviewWorkspace` owns presentation and selection, while `aiReviewActions.ts` provides immutable, deterministic transformations for rename, reorder, duplicate, delete, merge, split, cross-module moves, review status, warning resolution, and mock regenerate proposals. These actions do not import or mutate the production Course model.
+
+Desktop uses outline, selected-item editor, and review summary panels. Tablet and mobile expose the same areas as tabs so no fixed three-column layout is forced onto narrow viewports. Structural deletion requires confirmation. Merge, split, and regenerate use an editable Before/After review sheet before applying.
+
+Review-only metadata is optional on the AI draft for backward compatibility:
+
+- Course title, description, and objectives have review status plus a preview-opened flag.
+- Module, Lesson, and Block support `unreviewed`, `reviewed`, `needs_changes`, and `approved`.
+- Warning resolution records open, resolved, or dismissed state; dismissals keep their reason and can be restored.
+
+`useAiReviewHistory` keeps at most 25 immutable states in memory. The current draft is autosaved after a 650 ms debounce, but undo history is intentionally session-only. Draft health and approval readiness are transparent rule-based calculations rather than AI scores.
+
+Preview converts in memory and reuses the Employee lesson block renderer. It never calls ContentService, ProgressService, quiz submission, XP, or badge code. Approval remains the only production boundary: it creates a new Draft Course, stores the AI draft with `approved` status for audit, and never auto-publishes or overwrites an existing Course.
