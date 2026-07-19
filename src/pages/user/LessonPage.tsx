@@ -31,7 +31,6 @@ export function LessonPage() {
   const previous = lessons[lessonIndex - 1] ?? null
   const next = lessons[lessonIndex + 1] ?? null
   const moduleIndex = course.modules.findIndex((module) => module.lessons.some((item) => item.id === lesson.id))
-  const outline = <LessonOutline course={course} activeLessonId={lesson.id} completedLessonIds={progress.completedLessonIds} onNavigate={() => setOutlineOpen(false)} />
   const complete = () => {
     markLessonComplete(course.id, lesson.id)
     setFeedback(`Tuyệt vời! Bạn đã hoàn thành bài học và nhận +${lesson.xpReward} XP.`)
@@ -45,7 +44,7 @@ export function LessonPage() {
         <span>Bài {lessonIndex + 1}/{lessons.length}</span>
       </div>
       <div className="lesson-player container">
-        <aside className="lesson-outline">{outline}</aside>
+        <aside className="lesson-outline"><LessonOutline course={course} activeLessonId={lesson.id} completedLessonIds={progress.completedLessonIds} idPrefix="desktop-outline" /></aside>
         <div className="lesson-main">
           <header className="lesson-header">
             <span className="overline">Module {moduleIndex + 1}</span>
@@ -73,7 +72,7 @@ export function LessonPage() {
           <button type="button" className="lesson-outline-backdrop" aria-label="Đóng danh sách bài học" onClick={() => setOutlineOpen(false)} />
           <aside>
             <header><strong>Nội dung khóa học</strong><button type="button" className="icon-button" aria-label="Đóng danh sách bài học" onClick={() => setOutlineOpen(false)}><X /></button></header>
-            {outline}
+            <LessonOutline course={course} activeLessonId={lesson.id} completedLessonIds={progress.completedLessonIds} idPrefix="drawer-outline" onNavigate={() => setOutlineOpen(false)} />
           </aside>
         </div>
       )}

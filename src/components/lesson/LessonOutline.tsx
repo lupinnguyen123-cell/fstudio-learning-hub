@@ -1,4 +1,4 @@
-import { Check, ChevronDown, Circle, Play } from 'lucide-react'
+import { Check, ChevronDown, Play } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { Course } from '../../types'
@@ -7,10 +7,11 @@ interface LessonOutlineProps {
   course: Course
   activeLessonId: string
   completedLessonIds: string[]
+  idPrefix: string
   onNavigate?: () => void
 }
 
-export function LessonOutline({ course, activeLessonId, completedLessonIds, onNavigate }: LessonOutlineProps) {
+export function LessonOutline({ course, activeLessonId, completedLessonIds, idPrefix, onNavigate }: LessonOutlineProps) {
   const activeModuleIndex = course.modules.findIndex((module) => module.lessons.some((lesson) => lesson.id === activeLessonId))
   const [expandedModule, setExpandedModule] = useState(activeModuleIndex)
   const lessons = course.modules.flatMap((module) => module.lessons)
@@ -23,6 +24,7 @@ export function LessonOutline({ course, activeLessonId, completedLessonIds, onNa
         const expanded = moduleIndex === expandedModule
         const completedCount = module.lessons.filter((lesson) => completedLessonIds.includes(lesson.id)).length
         const moduleComplete = module.lessons.length > 0 && completedCount === module.lessons.length
+        const panelId = `${idPrefix}-module-${module.id}`
 
         return (
           <section key={module.id} className={expanded ? 'is-expanded' : ''}>
@@ -30,6 +32,7 @@ export function LessonOutline({ course, activeLessonId, completedLessonIds, onNa
               type="button"
               className="lesson-outline-module"
               aria-expanded={expanded}
+              aria-controls={panelId}
               onClick={() => setExpandedModule(expanded ? -1 : moduleIndex)}
             >
               <span>{moduleComplete ? <Check /> : moduleIndex + 1}</span>
@@ -37,7 +40,7 @@ export function LessonOutline({ course, activeLessonId, completedLessonIds, onNa
               <ChevronDown />
             </button>
             {expanded && (
-              <div className="lesson-outline-lessons">
+              <div id={panelId} className="lesson-outline-lessons">
                 {module.lessons.map((lesson) => {
                   const done = completedLessonIds.includes(lesson.id)
                   const current = lesson.id === activeLessonId
@@ -50,8 +53,9 @@ export function LessonOutline({ course, activeLessonId, completedLessonIds, onNa
                       to={`/learn/${course.id}/${lesson.id}`}
                       onClick={onNavigate}
                     >
-                      <span className="lesson-number">{done ? <Check /> : current ? <Play /> : <Circle />}<b>{!done && !current ? lessonNumber : null}</b></span>
-                      <span><strong>{lesson.title}</strong><small>{lesson.durationMinutes} phút</small></span>
+                      <span className="lesson-number">{done ? <Check /> : current ? <Play /> : lessonNumber}</span>
+                      <span className="lesson-outline-title">{lesson.title}</span>
+                      <small className="lesson-outline-duration">{lesson.durationMinutes} phút</small>
                     </Link>
                   )
                 })}

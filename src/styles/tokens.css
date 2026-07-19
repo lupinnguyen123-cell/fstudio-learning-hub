@@ -1,6 +1,6 @@
 :root {
   --color-bg-app: #F5F5F7; --color-bg-surface: #FFFFFF; --color-bg-muted: #F0F1F3;
-  --color-text-primary: #111111; --color-text-secondary: #64676D; --color-text-muted: #8A8D93;
+  --color-text-primary: #111111; --color-text-secondary: #64676D; --color-text-muted: #8A8D93; --color-text-tertiary: var(--color-text-muted);
   --color-border-default: #D8DADF; --color-border-strong: #B8BBC1;
   --color-accent-purple: #7C3AED; --color-accent-blue: #2563EB; --color-accent-orange: #F97316; --color-accent-green: #16A34A; --color-accent-pink: #EC4899;
   --color-success: #16A34A; --color-warning: #F59E0B; --color-danger: #DC2626; --color-info: #2563EB;
