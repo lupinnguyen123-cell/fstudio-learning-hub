@@ -120,3 +120,113 @@ body{background:var(--app-background);color:var(--app-text)}
 /* Pilot touch targets for narrow screens. */
 .filter-tabs button,.block-picker button,.sorting-list button,.validation-panel button,.course-completeness button{min-height:44px}
 .sorting-list button{width:44px;height:44px}
+
+/* Sprint 5.4 — premium neutral visual system */
+:root{color:var(--color-text-primary);background:var(--color-bg-app)}
+body,.dashboard-shell,.dashboard-main,.dashboard-content{background:var(--color-bg-app);color:var(--color-text-primary)}
+h1,h2,h3,h4,strong{color:var(--color-text-primary)}
+p{color:var(--color-text-secondary)}
+.top-header,.app-sidebar,.dashboard-footer{background:var(--color-bg-surface);border-color:var(--color-border-default)}
+.top-header{backdrop-filter:none}
+.app-sidebar{box-shadow:none}
+.sidebar-nav a{position:relative;color:var(--color-text-secondary)}
+.sidebar-nav a:hover{background:var(--color-bg-muted);color:var(--color-text-primary)}
+.sidebar-nav a.active{background:var(--color-bg-muted);color:var(--color-text-primary)}
+.sidebar-nav a.active:before{content:"";position:absolute;left:0;width:3px;height:24px;border-radius:3px;background:var(--color-accent-purple)}
+.sidebar-role{border-color:var(--color-border-default)}
+.sidebar-role .role-switcher,.role-switcher{border-color:var(--color-border-strong);background:#fff;color:var(--color-text-secondary)}
+.role-switcher:focus-within{outline:3px solid rgba(37,99,235,.2);outline-offset:2px;border-color:var(--color-accent-blue)}
+
+.button{border-radius:var(--app-radius-button);transition:background-color .16s,border-color .16s,color .16s,transform .16s,box-shadow .16s}
+.button-primary{border-color:#171717;background:#171717;color:#fff}
+.button-primary:hover{border-color:#303030;background:#303030}
+.button-secondary{border-color:var(--color-border-strong);background:#fff;color:#171717}
+.button-secondary:hover{border-color:#171717;background:var(--color-bg-muted)}
+.button-danger,.icon-button.danger{border:1px solid var(--color-danger);background:#fff;color:var(--color-danger)}
+.button-danger:hover,.icon-button.danger:hover{background:#FFF7F7}
+.button:disabled,button:disabled{cursor:not-allowed;opacity:.48;transform:none}
+.button:focus-visible,a:focus-visible,button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid rgba(37,99,235,.24);outline-offset:2px}
+
+.badge,.status{display:inline-flex;align-items:center;gap:5px;width:max-content;max-width:100%;padding:5px 9px;border:1px solid var(--color-border-strong);border-radius:var(--radius-pill);background:#fff;color:var(--color-text-secondary);font-size:11px;font-weight:750;line-height:1.25}
+.badge svg{width:14px;height:14px}
+.badge--purple{border-color:var(--color-accent-purple);background:#FAF7FF;color:#6D28D9}
+.badge--blue{border-color:var(--color-accent-blue);background:#F5F9FF;color:#1D4ED8}
+.badge--orange{border-color:var(--color-accent-orange);background:#FFF8F3;color:#C2410C}
+.badge--green,.badge--success,.badge-success,.status-completed{border-color:var(--color-success);background:#F5FFF8;color:#15803D}
+.badge--pink{border-color:var(--color-accent-pink);background:#FFF7FB;color:#BE185D}
+.badge--warning,.badge-warning{border-color:var(--color-warning);background:#FFFBEB;color:#A16207}
+.badge--danger{border-color:var(--color-danger);background:#FFF7F7;color:#B91C1C}
+.badge--neutral,.status-not-started{border-color:var(--color-border-strong);background:#fff;color:#55585E}
+.status-in-progress{border-color:var(--color-accent-blue);background:#F5F9FF;color:#1D4ED8}
+
+.section-header,.dashboard-section-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin-bottom:20px}
+.section-header h2{margin:6px 0 0;font-size:24px;letter-spacing:-.03em}
+.section-header p{margin:7px 0 0}
+.section-header__eyebrow,.overline,.dashboard-kicker{display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+.section-header__eyebrow:before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.section-header--blue .section-header__eyebrow,.overline{color:var(--color-accent-blue)}
+.section-header--purple .section-header__eyebrow,.dashboard-kicker{color:var(--color-accent-purple)}
+.section-header--orange .section-header__eyebrow{color:var(--color-accent-orange)}
+.section-header--green .section-header__eyebrow{color:var(--color-accent-green)}
+.section-header--pink .section-header__eyebrow{color:var(--color-accent-pink)}
+
+.dashboard-hero{border-color:var(--color-border-default);background:#fff;box-shadow:none}
+.dashboard-hero:before,.dashboard-hero:after{content:"";position:absolute;z-index:-1;border-radius:50%;pointer-events:none}
+.dashboard-hero:before{width:90px;height:90px;right:32px;top:-50px;background:rgba(124,58,237,.1)}
+.dashboard-hero:after{width:130px;height:130px;right:-65px;bottom:-75px;top:auto;background:rgba(37,99,235,.09)}
+.hero-visual{border-color:var(--color-border-default);background:#fff;box-shadow:0 2px 10px rgba(17,17,17,.045)}
+.hero-visual-icon{background:#F5F9FF;color:var(--color-accent-blue)}
+.progress-track{height:8px;background:#E5E7EB}
+.progress-track span{background:var(--color-accent-blue)}
+.progress-label strong{color:var(--color-accent-blue)}
+
+.course-card,.continue-card,.achievement-grid article,.module-card,.state-card,.builder-panel,.cms-course-card,.cms-block,.quiz-shell,.result-card,.confirm-dialog{border-color:var(--color-border-default);background:#fff;box-shadow:0 2px 10px rgba(17,17,17,.045)}
+.course-card{border-radius:18px}
+.course-card:hover{transform:translateY(-2px);border-color:var(--color-border-strong);box-shadow:0 7px 20px rgba(17,17,17,.07)}
+.course-art{background-color:var(--color-bg-muted);background-image:none}
+.course-art:after{border-color:rgba(37,99,235,.14)}
+.course-art .badge{position:relative;z-index:2}
+.course-card h3{color:var(--color-text-primary)}
+.course-card p,.eyebrow-row{color:var(--color-text-secondary)}
+.course-rewards{align-items:center}
+.course-rewards .badge{background:#fff}
+.text-link,.course-category{color:var(--color-accent-blue)}
+
+.course-hero{border-color:var(--color-border-default);background:#fff}
+.info-card{border:1px solid var(--color-border-default);background:#fff;color:var(--color-text-primary)}
+.info-card li,.info-card p{color:var(--color-text-secondary)}
+.info-card li svg{color:var(--color-accent-green)}
+.info-card p{border-color:var(--color-border-default)}
+.lesson-row{border:1px solid transparent;background:var(--color-bg-app)}
+.lesson-row:hover{border-color:var(--color-border-default);background:#fff}
+.learning-block,.interactive-block{border:1px solid var(--color-border-default);background:#fff}
+.interactive-block{border-left:3px solid var(--color-accent-purple)}
+.block-kicker{color:var(--color-accent-purple)}
+.complete-button{border-color:var(--color-success);background:#fff;color:#15803D}
+.quiz-shell aside{border-right:1px solid var(--color-border-default);background:var(--color-bg-muted);color:var(--color-text-primary)}
+.quiz-shell aside p{color:var(--color-text-secondary)}
+.quiz-icon{border:1px solid var(--color-accent-purple);background:#FAF7FF;color:var(--color-accent-purple)}
+.quiz-progress>span{background:#D8DADF}.quiz-progress i{background:var(--color-accent-purple)}
+.question-card label{border-color:var(--color-border-default);background:#fff}
+.question-card label.selected{border-color:var(--color-accent-purple);background:#FAF7FF;color:#5B21B6}
+
+.trainer-shell .admin-content,.admin-content{background:var(--color-bg-app)}
+.cms-course-card{border-top-width:1px}
+.cms-course-card:before,.outline-module:before,.cms-block>header:before{content:"";display:block;width:4px;align-self:stretch;border-radius:4px;background:var(--color-accent-blue)}
+.cms-course-card:before{width:36px;height:3px;align-self:auto}
+.outline-module{position:relative;border-color:var(--color-border-default);background:#fff}
+.outline-module:before{position:absolute;inset:14px auto 14px 0}
+.cms-block>header{position:relative;background:var(--color-bg-muted)}
+.cms-block>header:before{position:absolute;inset:10px auto 10px 0;background:var(--color-accent-purple)}
+.block-picker{border-color:var(--color-border-default);background:var(--color-bg-app)}
+.block-picker .block-picker-option{border-color:var(--color-border-default);background:#fff}
+.block-picker .block-picker-option:hover{border-color:var(--color-accent-purple);background:#FAF7FF}
+.cms-field input,.cms-field textarea,.cms-field select,.badge-editor input,.badge-editor select,.outline-module header input,.matching-row select{border-color:var(--color-border-default);background:#fff;color:var(--color-text-primary)}
+.cms-field input:focus,.cms-field textarea:focus,.cms-field select:focus,.badge-editor input:focus,.badge-editor select:focus{border-color:#171717;box-shadow:0 0 0 3px rgba(17,17,17,.08);outline:0}
+.builder-tabs{border-color:var(--color-border-default);background:#fff}
+.builder-tabs button.active{background:var(--color-bg-muted);color:var(--color-text-primary);box-shadow:inset 0 -2px var(--color-accent-purple)}
+.cms-warning,.builder-notice{border-color:var(--color-warning);background:#FFFBEB;color:#854D0E}
+.state-card{color:var(--color-text-secondary)}
+.state-card svg{color:var(--color-accent-blue)}
+
+@media(max-width:599px){.section-header{align-items:flex-start;flex-direction:column}.section-header>a{min-height:44px}.dashboard-hero{padding:22px}.builder-topbar>div:last-child{width:100%;display:grid;grid-template-columns:1fr 1fr}.builder-topbar .button{width:100%}.course-card:hover{transform:none}.badge{white-space:normal}.dialog-actions{display:grid;grid-template-columns:1fr}.dialog-actions .button{width:100%}}

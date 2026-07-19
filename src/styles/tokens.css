@@ -1,4 +1,10 @@
 :root {
+  --color-bg-app: #F5F5F7; --color-bg-surface: #FFFFFF; --color-bg-muted: #F0F1F3;
+  --color-text-primary: #111111; --color-text-secondary: #64676D; --color-text-muted: #8A8D93;
+  --color-border-default: #D8DADF; --color-border-strong: #B8BBC1;
+  --color-accent-purple: #7C3AED; --color-accent-blue: #2563EB; --color-accent-orange: #F97316; --color-accent-green: #16A34A; --color-accent-pink: #EC4899;
+  --color-success: #16A34A; --color-warning: #F59E0B; --color-danger: #DC2626; --color-info: #2563EB;
+  --border: var(--color-border-default); --muted: var(--color-text-muted); --text: var(--color-text-primary); --shadow-sm: 0 2px 10px rgba(17,17,17,.045);
   --surface-canvas: #f7f8fc; --surface-card: #ffffff; --surface-subtle: #f0f3f8;
   --text-primary: #172033; --text-secondary: #526078; --text-muted: #718096;
   --border-subtle: #e2e7ef; --border-strong: #cbd5e1;
@@ -13,9 +19,9 @@
   --category-soft-skill: #1b9eb7; --category-soft-skill-soft: #e9f8fb;
   --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-6: 24px; --space-8: 32px; --space-12: 48px; --space-16: 64px;
   --radius-sm: 8px; --radius-md: 12px; --radius-lg: 16px; --radius-xl: 24px; --radius-pill: 999px;
-  --shadow-raised: 0 10px 30px rgba(30,45,75,.08); --shadow-floating: 0 20px 55px rgba(30,45,75,.13);
-  --app-background: #f7f8fa; --app-surface: #ffffff; --app-primary: #6956d9; --app-primary-hover: #5845c3;
-  --app-primary-soft: #f1effd; --app-accent-soft: #edf6ff; --app-border: #e8e9ef;
-  --app-text: #202235; --app-text-secondary: #686b7c; --app-radius-card: 20px; --app-radius-button: 12px;
-  --app-shadow-card: 0 8px 28px rgba(41, 43, 69, .055); --app-sidebar-width: 280px;
+  --shadow-raised: 0 4px 16px rgba(17,17,17,.055); --shadow-floating: 0 10px 30px rgba(17,17,17,.09);
+  --app-background: var(--color-bg-app); --app-surface: var(--color-bg-surface); --app-primary: #171717; --app-primary-hover: #303030;
+  --app-primary-soft: var(--color-bg-muted); --app-accent-soft: #F5F9FF; --app-border: var(--color-border-default);
+  --app-text: var(--color-text-primary); --app-text-secondary: var(--color-text-secondary); --app-radius-card: 18px; --app-radius-button: 12px;
+  --app-shadow-card: 0 2px 10px rgba(17,17,17,.045); --app-sidebar-width: 280px;
 }
