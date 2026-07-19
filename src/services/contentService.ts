@@ -114,7 +114,7 @@ export function createBlock(type: LessonBlock['type']): LessonBlock {
   switch (type) {
     case 'heading': return { id, type, level: 2, text: 'Tiêu đề mới' }
     case 'paragraph': return { id, type, text: 'Nội dung bài học...' }
-    case 'image': return { id, type, url: '', alt: '', caption: '' }
+    case 'image': return { id, type, url: '', alt: '', caption: '', alignment: 'center', widthPercent: 100 }
     case 'video': return { id, type, title: 'Video', url: '', provider: 'youtube', description: '', durationMinutes: 5, transcript: '', required: false }
     case 'bullet_list': return { id, type, title: 'Danh sách', items: ['Nội dung thứ nhất'] }
     case 'quote': return { id, type, text: 'Trích dẫn', attribution: '' }

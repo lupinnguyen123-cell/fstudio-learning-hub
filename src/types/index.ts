@@ -11,7 +11,7 @@ export type ChoiceFeedback = { id: string; text: string; correct: boolean; feedb
 export type LessonBlock =
   | (BlockBase & { type: 'heading'; text: string; level: 2 | 3 })
   | (BlockBase & { type: 'paragraph'; text: string })
-  | (BlockBase & { type: 'image'; url: string; alt: string; caption?: string })
+  | (BlockBase & { type: 'image'; url: string; alt: string; caption?: string; alignment?: 'left' | 'center' | 'right'; widthPercent?: 50 | 75 | 100 })
   | (BlockBase & { type: 'video'; title: string; url: string; provider: VideoProvider; description: string; durationMinutes: number; transcript?: string; required: boolean })
   | (BlockBase & { type: 'bullet_list'; title: string; items: string[] })
   | (BlockBase & { type: 'quote'; text: string; attribution?: string })
