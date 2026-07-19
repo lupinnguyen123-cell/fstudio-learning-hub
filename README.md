@@ -120,7 +120,7 @@ Trong **Site configuration → Environment variables**, cấu hình các biến 
 
 Sau khi thay đổi biến môi trường, trigger deploy mới. File [`.env.example`](./.env.example) chỉ chứa tên biến và cấu hình không nhạy cảm. Không commit `.env`, `.env.local` hoặc `.netlify/.env`.
 
-AI thật hiện chỉ nhận nội dung Trainer dán, TXT hoặc Markdown có text hợp lệ. PDF, PPTX và DOCX chưa được parse; UI không gửi phần metadata/mock text tới provider. Nếu provider chưa được cấu hình, production hiển thị lỗi rõ ràng. Development có thể chọn tạo mock draft thủ công và draft đó luôn được gắn nhãn mô phỏng.
+Document Intelligence hiện parse đầy đủ nội dung Trainer dán, TXT và Markdown thành cấu trúc heading, paragraph, list, quote, image link, table và code. PDF, PPTX và DOCX được nhận diện, đọc metadata cơ bản và hiển thị placeholder rõ ràng nhưng chưa trích xuất nội dung. AI chỉ nhận Normalized Document; raw file và placeholder không được gửi tới provider. Trainer có thể xem Raw/Normalized/Detected Structure và export Normalized JSON để debug. Nếu provider chưa được cấu hình, production hiển thị lỗi rõ ràng. Development có thể chọn tạo mock draft thủ công và draft đó luôn được gắn nhãn mô phỏng.
 
 Không commit `.env`, `.env.local`, `node_modules` hoặc `dist`.
 

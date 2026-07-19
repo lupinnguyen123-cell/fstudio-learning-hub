@@ -12,7 +12,7 @@ export class OpenAiProvider implements AiProvider {
 
   async generateCourseDraft(request: GenerateCourseRequest): Promise<GenerateCourseResponse> {
     const started = Date.now(); const raw = await this.call(request.requestId, generationPrompt(request), 'ai_course_draft', courseDraftSchema); const parsed = outputText(raw); const draft = parseDraftResponse(parsed.text); const generatedAt = new Date().toISOString()
-    return { requestId: request.requestId, provider: 'openai', model: parsed.model ?? this.config.model, draft: { ...draft, sourceDocumentId: request.sourceDocument.id, generation: { provider: 'openai', model: parsed.model ?? this.config.model, generatedAt, latencyMs: Date.now() - started, usage: parsed.usage } }, warnings: [], latencyMs: Date.now() - started, generatedAt, usage: parsed.usage }
+    return { requestId: request.requestId, provider: 'openai', model: parsed.model ?? this.config.model, draft: { ...draft, sourceDocumentId: request.document.sourceId, generation: { provider: 'openai', model: parsed.model ?? this.config.model, generatedAt, latencyMs: Date.now() - started, usage: parsed.usage } }, warnings: [], latencyMs: Date.now() - started, generatedAt, usage: parsed.usage }
   }
 
   async regenerateSection(request: RegenerateSectionRequest): Promise<RegenerateSectionResponse> {

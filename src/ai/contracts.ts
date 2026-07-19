@@ -1,12 +1,13 @@
 import type { AiCourseDraft, AiPresetId, AiReviewSelection } from '../features/ai-authoring/types'
 import type { RegenerateAction } from '../features/ai-authoring/aiReviewActions'
+import type { DocumentHandoff } from '../document/types'
 
 export type AiErrorCode = 'AI_NOT_CONFIGURED' | 'AI_UNAUTHORIZED' | 'AI_RATE_LIMITED' | 'AI_TIMEOUT' | 'AI_PROVIDER_ERROR' | 'AI_INVALID_RESPONSE' | 'AI_SCHEMA_VALIDATION_FAILED' | 'AI_SOURCE_TOO_SHORT' | 'AI_SOURCE_TOO_LARGE' | 'AI_UNSUPPORTED_SOURCE' | 'AI_NETWORK_ERROR'
 export interface AiUsage { inputTokens?: number; outputTokens?: number; totalTokens?: number }
 export interface AiResponseMeta { provider: string; model: string; generatedAt: string; latencyMs: number; usage?: AiUsage; isMock?: boolean }
 
 export interface GenerateCourseRequest {
-  sourceDocument: { id: string; fileName: string; fileType: string; extractedText: string; extractionMode: 'mock' | 'pasted' | 'text_file' }
+  document: DocumentHandoff
   courseType: AiPresetId
   language: 'vi' | 'en'
   tone: 'professional_friendly'

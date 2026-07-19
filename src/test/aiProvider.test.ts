@@ -13,7 +13,8 @@ import type { GenerateCourseRequest } from '../ai/contracts'
 const service = new AiCourseService(null)
 const source = service.analyzeSource({ name: 'source.md', size: 400, type: 'text/markdown' }, 'Nội dung đào tạo bán lẻ đủ dài để kiểm tra nhu cầu khách hàng, kiến thức sản phẩm và cách áp dụng tại cửa hàng F.Studio.').source
 const draft = service.generateCourseDraft(source, 'product')
-const request: GenerateCourseRequest = { sourceDocument: { id: source.id, fileName: source.fileName, fileType: source.fileType, extractedText: source.extractedText, extractionMode: 'text_file' }, courseType: 'product', language: 'vi', tone: 'professional_friendly', audience: 'Nhân viên', desiredLessonLength: 'short', includeQuiz: true, includeScenario: true, includeFlashcards: true, retailContext: 'F.Studio', requestId: 'request_12345678' }
+const document = { schemaVersion: 1 as const, sourceId: source.id, fileName: source.fileName, format: 'markdown' as const, metadata: { title: 'Source', wordCount: 24 }, sections: [{ title: 'Nội dung', level: 1, elements: [{ type: 'paragraph' as const, content: source.extractedText, retailSignals: ['product' as const] }] }], normalizedText: source.extractedText, detectedSignals: ['product' as const], qualityScore: 80 }
+const request: GenerateCourseRequest = { document, courseType: 'product', language: 'vi', tone: 'professional_friendly', audience: 'Nhân viên', desiredLessonLength: 'short', includeQuiz: true, includeScenario: true, includeFlashcards: true, retailContext: 'F.Studio', requestId: 'request_12345678' }
 
 describe('AI provider abstraction and validation', () => {
   it('selects OpenAI from server-only configuration', () => {
@@ -33,9 +34,9 @@ describe('AI provider abstraction and validation', () => {
   })
 
   it('rejects short, large and unsupported sources while accepting valid text', () => {
-    expect(() => validateGenerateRequest({ ...request, sourceDocument: { ...request.sourceDocument, extractedText: 'ngắn' } }, 1_000)).toThrowError(expect.objectContaining({ code: 'AI_SOURCE_TOO_SHORT' }))
-    expect(() => validateGenerateRequest({ ...request, sourceDocument: { ...request.sourceDocument, extractedText: 'a'.repeat(1_001) } }, 1_000)).toThrowError(expect.objectContaining({ code: 'AI_SOURCE_TOO_LARGE' }))
-    expect(() => validateGenerateRequest({ ...request, sourceDocument: { ...request.sourceDocument, extractionMode: 'mock' } }, 1_000)).toThrowError(expect.objectContaining({ code: 'AI_UNSUPPORTED_SOURCE' }))
+    expect(() => validateGenerateRequest({ ...request, document: { ...request.document, normalizedText: 'ngắn' } }, 1_000)).toThrowError(expect.objectContaining({ code: 'AI_SOURCE_TOO_SHORT' }))
+    expect(() => validateGenerateRequest({ ...request, document: { ...request.document, normalizedText: 'a'.repeat(1_001) } }, 1_000)).toThrowError(expect.objectContaining({ code: 'AI_SOURCE_TOO_LARGE' }))
+    expect(() => validateGenerateRequest({ ...request, document: { fileName: 'raw.pdf' } }, 1_000)).toThrowError(expect.objectContaining({ code: 'AI_UNSUPPORTED_SOURCE' }))
     expect(validateGenerateRequest(request, 1_000).requestId).toBe(request.requestId)
   })
 
